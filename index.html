@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -557,6 +557,35 @@ body::after{
 .dev-footer{flex-shrink:0;text-align:center;font-size:12px;font-weight:400;color:var(--muted);padding:12px 0 6px;letter-spacing:0.02em;line-height:1.6;border-top:1px solid rgba(255,255,255,0.35);margin-top:6px}
 .dev-footer a{color:var(--muted);text-decoration:none;border-bottom:1px solid transparent;transition:color 0.15s,border-color 0.15s}
 .dev-footer a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* Language toggle */
+.lang-toggle{
+  position:fixed;top:14px;right:16px;z-index:1000;
+  display:flex;align-items:center;
+  background:var(--surface);border:1px solid var(--border2);border-radius:20px;
+  overflow:hidden;font-family:var(--font-body);font-size:12px;font-weight:500;
+}
+.lang-toggle button{
+  background:none;border:none;cursor:pointer;
+  padding:5px 11px;color:var(--muted2);line-height:1;
+  transition:color 0.15s,background 0.15s;
+}
+.lang-toggle button.active{background:var(--accent);color:#18181b;border-radius:20px}
+.lang-toggle button:not(.active):hover{color:var(--text)}
+
+/* RTL overrides — browser handles most automatically; these cover explicit directional values */
+[dir="rtl"] .dev-footer{left:auto;right:22px;text-align:right}
+[dir="rtl"] .sidebar{border-right:none;border-left:1px solid var(--border)}
+[dir="rtl"] .participant-row,[dir="rtl"] .participant-item{flex-direction:row-reverse}
+[dir="rtl"] .step-header{flex-direction:row-reverse}
+[dir="rtl"] .clear-inline-btn{text-align:right}
+[dir="rtl"] .bt-card{text-align:right}
+[dir="rtl"] .cal-nav{flex-direction:row-reverse}
+[dir="rtl"] .chips-container{justify-content:flex-end}
+[dir="rtl"] .new-event-btn{text-align:right}
+[dir="rtl"] .lang-toggle{right:auto;left:16px}
+[dir="rtl"] .step-num{margin-right:0;margin-left:8px}
+[dir="rtl"] .you-badge{margin-right:4px;margin-left:0}
 </style>
 </head>
 <body>
@@ -567,62 +596,62 @@ body::after{
 <div id="screen-create">
   <header class="site-header">
     <div class="logo">Meet Scheduler</div>
-    <p class="tagline">by <em>Meteor</em> — Find the time. Finally.</p>
+    <p class="tagline" data-i18n-html="tagline">by <em>Meteor</em> — Find the time. Finally.</p>
   </header>
 
   <main class="create-form">
     <!-- Step 1: Name -->
     <div class="card" style="--d:.08s">
-      <div class="step-label"><span class="step-num">01</span>Name your event</div>
+      <div class="step-label"><span class="step-num">01</span><span data-i18n="step1">Name your event</span></div>
       <input type="text" id="event-name" class="text-input"
-        placeholder="Team lunch, Project kickoff…" autocomplete="off" spellcheck="false">
+        placeholder="Team lunch, Project kickoff…" data-i18n-ph="namePlaceholder" autocomplete="off" spellcheck="false">
     </div>
 
     <!-- Step 2: Dates -->
     <div class="card" style="--d:.18s">
       <div class="step-header">
-        <div class="step-label" style="margin-bottom:0"><span class="step-num">02</span>Pick dates</div>
+        <div class="step-label" style="margin-bottom:0"><span class="step-num">02</span><span data-i18n="step2">Pick dates</span></div>
         <div class="mode-toggle">
-          <button id="mode-specific" class="toggle-btn active">Specific Dates</button>
-          <button id="mode-days" class="toggle-btn">Days of Week</button>
+          <button id="mode-specific" class="toggle-btn active" data-i18n="modeSpecific">Specific Dates</button>
+          <button id="mode-days" class="toggle-btn" data-i18n="modeDays">Days of Week</button>
         </div>
       </div>
 
       <!-- Calendar view -->
       <div id="calendar-view">
         <div class="cal-nav">
-          <button id="cal-prev" class="cal-nav-btn" title="Previous month">&#8592;</button>
+          <button id="cal-prev" class="cal-nav-btn" title="Previous month" data-i18n-title="prevMonth">&#8592;</button>
           <span id="cal-month-label" class="cal-month-label"></span>
-          <button id="cal-next" class="cal-nav-btn" title="Next month">&#8594;</button>
+          <button id="cal-next" class="cal-nav-btn" title="Next month" data-i18n-title="nextMonth">&#8594;</button>
         </div>
         <div id="calendar-grid" class="calendar-grid"></div>
         <div id="selected-chips" class="chips-container"></div>
-        <div id="cal-error" class="field-error" style="display:none">Please select at least one date.</div>
+        <div id="cal-error" class="field-error" style="display:none" data-i18n="errorDate">Please select at least one date.</div>
       </div>
 
       <!-- Days of week view -->
       <div id="dow-view" style="display:none">
         <div id="dow-buttons" class="dow-buttons"></div>
-        <div id="dow-error" class="field-error" style="display:none">Please select at least one day.</div>
+        <div id="dow-error" class="field-error" style="display:none" data-i18n="errorDay">Please select at least one day.</div>
       </div>
     </div>
 
     <!-- Step 3: Times -->
     <div class="card" style="--d:.28s">
-      <div class="step-label"><span class="step-num">03</span>Set time range</div>
+      <div class="step-label"><span class="step-num">03</span><span data-i18n="step3">Set time range</span></div>
       <div class="time-row">
         <div class="time-field">
-          <label class="field-label" for="time-from">No earlier than</label>
+          <label class="field-label" for="time-from" data-i18n="noEarlier">No earlier than</label>
           <select id="time-from" class="styled-select"></select>
         </div>
         <div class="time-sep">—</div>
         <div class="time-field">
-          <label class="field-label" for="time-to">No later than</label>
+          <label class="field-label" for="time-to" data-i18n="noLater">No later than</label>
           <select id="time-to" class="styled-select"></select>
         </div>
       </div>
       <div class="tz-row">
-        <label class="field-label" for="tz-select">Time zone</label>
+        <label class="field-label" for="tz-select" data-i18n="timezone">Time zone</label>
         <select id="tz-select" class="styled-select"></select>
       </div>
     </div>
@@ -643,10 +672,10 @@ body::after{
   <div id="name-overlay" class="name-overlay">
     <div class="name-panel">
       <div class="name-panel-logo">Meet Scheduler</div>
-      <h2 class="name-panel-title">Mark your availability</h2>
-      <p class="name-panel-sub">Enter your name, then drag across the grid<br>to show when you're free.</p>
+      <h2 class="name-panel-title" data-i18n="markAvail">Mark your availability</h2>
+      <p class="name-panel-sub" data-i18n="markSub">Enter your name, then drag across the grid<br>to show when you're free.</p>
       <input type="text" id="participant-name" class="text-input"
-        placeholder="Your name" autocomplete="off" spellcheck="false">
+        placeholder="Your name" data-i18n-ph="namePH" autocomplete="off" spellcheck="false">
       <div id="name-error" style="display:none;font-size:12px;color:#f87171;margin-top:8px;text-align:left"></div>
       <div id="rejoin-prompt" class="rejoin-prompt" style="display:none">
         <p id="rejoin-msg"></p>
@@ -660,7 +689,7 @@ body::after{
   <aside class="sidebar">
     <div class="sidebar-logo">Meet Scheduler</div>
     <div class="sidebar-section">
-      <div class="sidebar-sec-label" style="display:flex;align-items:center;gap:7px">People <span id="people-count" class="people-count">0</span></div>
+      <div class="sidebar-sec-label" style="display:flex;align-items:center;gap:7px"><span data-i18n="people">People</span> <span id="people-count" class="people-count">0</span></div>
       <div id="participant-list" class="participant-list"></div>
     </div>
     <div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">
@@ -678,32 +707,38 @@ body::after{
       <div class="event-title-row">
         <h1 id="event-title" class="grid-event-title"></h1>
         <input id="title-edit-input" class="event-title-input" style="display:none" autocomplete="off" spellcheck="false">
-        <button id="edit-title-btn" class="edit-title-btn" style="display:none" title="Edit meeting name">&#9998;</button>
+        <button id="edit-title-btn" class="edit-title-btn" style="display:none" title="Edit meeting name" data-i18n-title="editTitle">&#9998;</button>
       </div>
     </div>
     <div class="grid-top-row">
-      <div class="grid-hint">Drag to mark your free times.</div>
+      <div class="grid-hint" data-i18n="gridHint">Drag to mark your free times.</div>
     </div>
     <div class="grid-scroll">
       <div id="avail-grid" class="avail-grid"></div>
     </div>
     <div class="best-times-section">
       <div class="bt-header">
-        <span class="bt-label">Best times</span>
-        <span id="bt-empty" class="bt-empty" style="display:none">Mark your availability to see best times</span>
+        <span class="bt-label" data-i18n="bestTimes">Best times</span>
+        <span id="bt-empty" class="bt-empty" data-i18n="bestEmpty" style="display:none">Mark your availability to see best times</span>
       </div>
       <div id="best-times" class="bt-cards"></div>
     </div>
-    <div class="mobile-notice">Best experienced on a wider screen</div>
+    <div class="mobile-notice" data-i18n="mobileNotice">Best experienced on a wider screen</div>
   </div>
 </div>
 
 <!-- Hover tooltip -->
 <div id="grid-tooltip" class="grid-tooltip" style="display:none"></div>
 
+<!-- Language toggle -->
+<div class="lang-toggle" id="lang-toggle">
+  <button id="lang-en" onclick="setLang('en')">EN</button>
+  <button id="lang-he" onclick="setLang('he')">עב</button>
+</div>
+
 <!-- Loading overlay (shown while fetching event from Firestore) -->
 <div id="loading-overlay" style="position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:9000">
-  <div style="color:var(--accent);font-family:'Outfit',sans-serif;font-size:18px;font-weight:300;letter-spacing:0.15em;opacity:0.8">Loading…</div>
+  <div style="color:var(--accent);font-family:'Outfit',sans-serif;font-size:18px;font-weight:300;letter-spacing:0.15em;opacity:0.8" data-i18n="loading">Loading…</div>
 </div>
 
 <script>
@@ -743,10 +778,136 @@ const S = {
   isCreator: false,
 };
 
-const MONTH_NAMES  = ['January','February','March','April','May','June',
-                      'July','August','September','October','November','December'];
-const DAY_SHORT    = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const DAY_FULL     = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+// ══════════════════════════════════════
+// I18N
+// ══════════════════════════════════════
+const LANGS = {
+  en: {
+    pageTitle:'Meteor — Find the time. Finally.',
+    tagline:'by <em>Meteor</em> — Find the time. Finally.',
+    step1:'Name your event', namePlaceholder:'Team lunch, Project kickoff…',
+    step2:'Pick dates', modeSpecific:'Specific Dates', modeDays:'Days of Week',
+    prevMonth:'Previous month', nextMonth:'Next month',
+    errorDate:'Please select at least one date.', errorDay:'Please select at least one day.',
+    step3:'Set time range', noEarlier:'No earlier than', noLater:'No later than', timezone:'Time zone',
+    createBtn:'Create Event &nbsp;&#8594;', creating:'Creating…',
+    markAvail:'Mark your availability',
+    markSub:"Enter your name, then drag across the grid to show when you're free.",
+    namePH:'Your name', continueBtn:'Continue &#8594;', joinBtn:'Join the event &nbsp;&#8594;', joining:'Joining…',
+    people:'People', copyLink:'&#128279; Copy meeting link', copied:'&#10003; Copied!',
+    sendEmail:'&#9993; Send via email', newEvent:'&#8592; New event', editTitle:'Edit meeting name',
+    gridHint:'Drag to mark your free times.', bestTimes:'Best times',
+    bestEmpty:'Mark your availability to see best times',
+    mobileNotice:'Best experienced on a wider screen', loading:'Loading…',
+    youBadge:'you', clearBtn:'&#10005; Clear my times',
+    allPeople:(n)=>n===1?'All 1 person':`All ${n} people`,
+    ofPeople:(x,n)=>n===1?`${x} of 1 person`:`${x} of ${n} people`,
+    rejoinPrompt:(name)=>`"${name}" already joined this meeting. Continue as them?`,
+    dateCount:(n)=>n===1?'1 date':`${n} dates`,
+    emailSubject:(name)=>`You're invited: ${name}`,
+    emailBody:(name,url)=>`Hi,\n\nI'd like to find a time for: ${name}\n\nMark your availability:\n${url}\n\nThanks!`,
+    notFound:'Event not found. Create a new one below.',
+    firebaseErr:'Could not create event — check your Firebase config.',
+    months:['January','February','March','April','May','June','July','August','September','October','November','December'],
+    monthsShort:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    daysShort:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+    daysFull:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+    dir:'ltr', locale:'en-US', ampm:true,
+  },
+  he: {
+    pageTitle:'מטאור — מוצאים זמן. סוף סוף.',
+    tagline:'מאת <em>Meteor</em> — מוצאים זמן. סוף סוף.',
+    step1:'שם האירוע', namePlaceholder:'ארוחת צוות, קיק-אוף…',
+    step2:'בחירת תאריכים', modeSpecific:'תאריכים ספציפיים', modeDays:'ימי השבוע',
+    prevMonth:'חודש קודם', nextMonth:'חודש הבא',
+    errorDate:'יש לבחור לפחות תאריך אחד.', errorDay:'יש לבחור לפחות יום אחד.',
+    step3:'טווח שעות', noEarlier:'לא לפני', noLater:'לא אחרי', timezone:'אזור זמן',
+    createBtn:'&#8592; יצירת אירוע &nbsp;', creating:'יוצר…',
+    markAvail:'סמן זמינות',
+    markSub:'הכנס שם וגרור על הלוח כדי לסמן מתי אתה פנוי.',
+    namePH:'השם שלך', continueBtn:'&#8592; המשך', joinBtn:'&#8592; הצטרף לאירוע &nbsp;', joining:'מצטרף…',
+    people:'משתתפים', copyLink:'&#128279; העתק קישור', copied:'&#10003; הועתק!',
+    sendEmail:'&#9993; שלח במייל', newEvent:'אירוע חדש &#8594;', editTitle:'עריכת שם הפגישה',
+    gridHint:'גרור כדי לסמן זמינות.', bestTimes:'זמנים מומלצים',
+    bestEmpty:'סמן זמינות כדי לראות את הזמנים הטובים ביותר',
+    mobileNotice:'מומלץ לצפות במסך רחב יותר', loading:'טוען…',
+    youBadge:'את/ה', clearBtn:'&#10005; נקה זמנים',
+    allPeople:(n)=>n===1?'כל משתתף אחד':`כל ${n} המשתתפים`,
+    ofPeople:(x,n)=>`${x} מתוך ${n}`,
+    rejoinPrompt:(name)=>`"${name}" כבר הצטרף לפגישה. להמשיך בתור אותו משתמש?`,
+    dateCount:(n)=>n===1?'תאריך אחד':`${n} תאריכים`,
+    emailSubject:(name)=>`הוזמנת: ${name}`,
+    emailBody:(name,url)=>`שלום,\n\nאני מחפש זמן שמתאים לכולם עבור: ${name}\n\nלחץ כאן לסימון זמינות:\n${url}\n\nתודה!`,
+    notFound:'האירוע לא נמצא. צור אירוע חדש.',
+    firebaseErr:'לא ניתן ליצור אירוע — בדוק את הגדרות Firebase.',
+    months:['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'],
+    monthsShort:['ינו׳','פבר׳','מרץ','אפר׳','מאי','יונ׳','יול׳','אוג׳','ספט׳','אוק׳','נוב׳','דצמ׳'],
+    daysShort:['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'],
+    daysFull:['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'],
+    dir:'rtl', locale:'he-IL', ampm:false,
+  }
+};
+
+let currentLang = localStorage.getItem('lang') || 'en';
+const t = () => LANGS[currentLang];
+
+function applyLang() {
+  const lang = t();
+  document.documentElement.dir  = lang.dir;
+  document.documentElement.lang = currentLang;
+  document.title = lang.pageTitle;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const v = lang[el.dataset.i18n];
+    if (typeof v === 'string')
+      el.dataset.i18nHtml ? (el.innerHTML = v) : (el.textContent = v);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const v = lang[el.dataset.i18nHtml]; if (typeof v === 'string') el.innerHTML = v;
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const v = lang[el.dataset.i18nPh]; if (v) el.placeholder = v;
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const v = lang[el.dataset.i18nTitle]; if (v) el.title = v;
+  });
+  const cb = document.getElementById('create-btn');
+  if (cb) cb.innerHTML = lang.createBtn;
+  const jb = document.getElementById('join-btn');
+  if (jb) jb.innerHTML = lang.joinBtn;
+  const rb = document.getElementById('rejoin-btn');
+  if (rb) rb.innerHTML = lang.continueBtn;
+  const nb = document.getElementById('new-event-btn');
+  if (nb) nb.innerHTML = lang.newEvent;
+  const sb = document.getElementById('share-btn');
+  if (sb) sb.innerHTML = lang.copyLink;
+  const eb = document.getElementById('email-btn');
+  if (eb) eb.innerHTML = lang.sendEmail;
+  const sc = document.getElementById('share-confirm');
+  if (sc) sc.innerHTML = lang.copied;
+  document.getElementById('lang-en')?.classList.toggle('active', currentLang === 'en');
+  document.getElementById('lang-he')?.classList.toggle('active', currentLang === 'he');
+}
+
+// Re-render data (stored so setLang can refresh Screen B live)
+let lastBestTimesData = null;
+
+function setLang(code) {
+  currentLang = code;
+  localStorage.setItem('lang', code);
+  applyLang();
+  renderCalendar();
+  buildDOW();
+  buildTimeSelects();
+  if (S.eventSlug) {
+    buildGrid();
+    renderBestTimes();
+    renderParticipants();
+  }
+}
+
+// ══════════════════════════════════════
+// LEGACY ARRAYS (kept for any remaining direct refs — prefer t() in new code)
+// ══════════════════════════════════════
 
 // ══════════════════════════════════════
 // UTILITIES
@@ -762,9 +923,12 @@ function nameToColor(name) {
 }
 
 function minsToLabel(m) {
-  const h = Math.floor(m / 60) % 24;
-  const min = m % 60;
-  return `${h % 12 || 12}:${min.toString().padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
+  const h = Math.floor(m / 60) % 24, min = m % 60;
+  const pad = n => String(n).padStart(2,'0');
+  if (!t().ampm) return `${pad(h)}:${pad(min)}`;
+  const suffix = h < 12 ? 'AM' : 'PM';
+  const h12 = h % 12 || 12;
+  return min ? `${h12}:${pad(min)} ${suffix}` : `${h12}:00 ${suffix}`;
 }
 
 function cid(col, row) { return `${col}:${row}`; }
@@ -789,14 +953,14 @@ function renderCalendar() {
   const label = document.getElementById('cal-month-label');
   const { calYear: y, calMonth: m } = S;
 
-  label.textContent = `${MONTH_NAMES[m]} ${y}`;
+  label.textContent = `${t().months[m]} ${y}`;
 
   const firstDow = new Date(y, m, 1).getDay();
   const daysInMonth = new Date(y, m + 1, 0).getDate();
   const todayStr = isoDate(new Date());
 
   grid.innerHTML = '';
-  DAY_SHORT.forEach(d => {
+  t().daysShort.forEach(d => {
     const el = document.createElement('div');
     el.className = 'cal-header';
     el.textContent = d;
@@ -855,19 +1019,20 @@ function renderChips() {
   if (!sorted.length) { c.innerHTML = ''; return; }
   c.innerHTML = sorted.map(d => {
     const [y, mo, day] = d.split('-').map(Number);
-    const label = new Date(y, mo-1, day).toLocaleDateString('en-US', {month:'short', day:'numeric'});
+    const label = new Date(y, mo-1, day).toLocaleDateString(t().locale, {month:'short', day:'numeric'});
     return `<span class="chip">${label}</span>`;
-  }).join('') + `<span class="chip" style="opacity:.5">${sorted.length} date${sorted.length>1?'s':''}</span>`;
+  }).join('') + `<span class="chip" style="opacity:.5">${t().dateCount(sorted.length)}</span>`;
 }
 
 // ══════════════════════════════════════
 // SCREEN A: DAYS OF WEEK
 // ══════════════════════════════════════
-function initDOW() {
+function buildDOW() {
   const container = document.getElementById('dow-buttons');
-  DAY_SHORT.forEach((d, i) => {
+  container.innerHTML = '';
+  t().daysShort.forEach((d, i) => {
     const btn = document.createElement('button');
-    btn.className = 'dow-btn';
+    btn.className = 'dow-btn' + (S.selectedDays.has(i) ? ' active' : '');
     btn.textContent = d;
     btn.addEventListener('click', () => {
       if (S.selectedDays.has(i)) { S.selectedDays.delete(i); btn.classList.remove('active'); }
@@ -881,12 +1046,22 @@ function initDOW() {
 // SCREEN A: TIME DROPDOWNS
 // ══════════════════════════════════════
 function buildTimeSelect(el, def) {
+  el.innerHTML = '';
   for (let m = 0; m < 24*60; m += 30) {
     const o = document.createElement('option');
     o.value = m; o.textContent = minsToLabel(m);
     if (m === def) o.selected = true;
     el.appendChild(o);
   }
+}
+
+function buildTimeSelects() {
+  const fe = document.getElementById('time-from');
+  const te = document.getElementById('time-to');
+  const fv = fe.value ? parseInt(fe.value) : 9*60;
+  const tv = te.value ? parseInt(te.value) : 17*60;
+  buildTimeSelect(fe, fv);
+  buildTimeSelect(te, tv);
 }
 
 function buildTZSelect() {
@@ -942,7 +1117,7 @@ async function createEvent() {
   }
   if (S.mode === 'specific' && S.selectedDates.size === 0) {
     const err = document.getElementById('cal-error');
-    err.textContent = 'Please select at least one date.';
+    err.textContent = t().errorDate;
     err.style.display = 'block';
     const c = document.getElementById('calendar-view');
     c.classList.add('shake');
@@ -970,7 +1145,7 @@ async function createEvent() {
   S.isCreator = true;
 
   const btn = document.getElementById('create-btn');
-  btn.textContent = 'Creating…';
+  btn.innerHTML = t().creating;
   btn.disabled = true;
 
   try {
@@ -981,15 +1156,16 @@ async function createEvent() {
       earlierThan: S.earlierThan, laterThan: S.laterThan,
       timezone: S.timezone,
       creatorToken,
+      lang: currentLang,
       participants: {},
     });
     location.hash = S.eventSlug;
     transitionToB();
   } catch(e) {
-    btn.textContent = 'Create Event  →';
+    btn.innerHTML = t().createBtn;
     btn.disabled = false;
     const err = document.getElementById('cal-error');
-    err.textContent = 'Could not create event — check your Firebase config.';
+    err.textContent = t().firebaseErr;
     err.style.display = 'block';
   }
 }
@@ -1083,7 +1259,7 @@ function subscribeToEvent() {
 // ══════════════════════════════════════
 function getCols() {
   if (S.mode === 'specific') return [...S.selectedDates].sort();
-  return [...S.selectedDays].sort((a,b)=>a-b).map(i => DAY_FULL[i]);
+  return [...S.selectedDays].sort((a,b)=>a-b).map(i => t().daysFull[i]);
 }
 
 function getRows() {
@@ -1111,8 +1287,8 @@ function buildGrid() {
     if (S.mode === 'specific') {
       const [y, mo, d] = col.split('-').map(Number);
       const dt = new Date(y, mo-1, d);
-      h.innerHTML = `<span class="col-day">${dt.toLocaleDateString('en-US',{weekday:'short'})}</span>
-                     <span class="col-date">${dt.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>`;
+      h.innerHTML = `<span class="col-day">${dt.toLocaleDateString(t().locale,{weekday:'short'})}</span>
+                     <span class="col-date">${dt.toLocaleDateString(t().locale,{month:'short',day:'numeric'})}</span>`;
     } else {
       h.innerHTML = `<span class="col-day">${col.slice(0,3)}</span>`;
     }
@@ -1226,7 +1402,7 @@ function renderBestTimes() {
     if (S.mode === 'specific') {
       const [y, mo, d] = cols[slot.c].split('-').map(Number);
       const dt = new Date(y, mo-1, d);
-      dateLabel = dt.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+      dateLabel = dt.toLocaleDateString(t().locale, {weekday:'short', month:'short', day:'numeric'});
     } else {
       dateLabel = cols[slot.c];
     }
@@ -1239,8 +1415,8 @@ function renderBestTimes() {
 
     // Availability label
     const availLabel = slot.count === total
-      ? `All ${total} ${total === 1 ? 'person' : 'people'}`
-      : `${slot.count} of ${total} people`;
+      ? t().allPeople(total)
+      : t().ofPeople(slot.count, total);
 
     const pct = Math.round(slot.count / total * 100);
 
@@ -1303,7 +1479,8 @@ function showTooltip(cell, e) {
   const avail = all.filter(p => p.availability.has(id));
   if (!avail.length) { tooltip.style.display = 'none'; return; }
 
-  const header = `<div class="tt-header"><b>${avail.length}</b> of ${all.length} ${all.length === 1 ? 'person' : 'people'}</div>`;
+  const ttSuffix = t().ofPeople(avail.length, all.length).replace(/^\d+\s*/, '');
+  const header = `<div class="tt-header"><b>${avail.length}</b> ${ttSuffix}</div>`;
   const names  = avail.map(p =>
     `<div class="tt-person"><span class="tt-dot" style="background:${p.color}"></span>${p.name}</div>`
   ).join('');
@@ -1335,14 +1512,14 @@ async function joinEvent() {
   // Check for duplicate name — offer rejoin if the name already exists
   const existing = S.participants.find(p => p.name.toLowerCase() === name.toLowerCase());
   if (existing) {
-    document.getElementById('rejoin-msg').textContent = `"${existing.name}" already joined this meeting. Continue as them?`;
+    document.getElementById('rejoin-msg').textContent = t().rejoinPrompt(existing.name);
     document.getElementById('rejoin-prompt').style.display = 'block';
     nameErr.style.display = 'none';
     return;
   }
 
   const joinBtn = document.getElementById('join-btn');
-  joinBtn.textContent = 'Joining…';
+  joinBtn.innerHTML = t().joining;
   joinBtn.disabled = true;
 
   S.currentUser = { name, color: nameToColor(name), availability: new Set() };
@@ -1353,7 +1530,7 @@ async function joinEvent() {
       [`participants.${name}`]: { color: S.currentUser.color, availability: [] },
     });
   } catch(e) {
-    joinBtn.textContent = 'Join the event  →';
+    joinBtn.innerHTML = t().joinBtn;
     joinBtn.disabled = false;
     return;
   }
@@ -1391,8 +1568,8 @@ function renderParticipants() {
     return `<div class="participant-item">
       <span class="p-dot" style="background:${p.color}"></span>
       <span>${p.name}</span>
-      ${isYou ? '<span class="you-badge">you</span>' : ''}
-    </div>${isYou ? '<button class="clear-inline-btn">&#10005; Clear my times</button>' : ''}`;
+      ${isYou ? `<span class="you-badge">${t().youBadge}</span>` : ''}
+    </div>${isYou ? `<button class="clear-inline-btn">${t().clearBtn}</button>` : ''}`;
   }).join('');
   const clearInline = container.querySelector('.clear-inline-btn');
   if (clearInline) clearInline.addEventListener('click', clearMyTimes);
@@ -1426,7 +1603,7 @@ function initScreenA() {
     renderCalendar();
   });
   initModeToggle();
-  initDOW();
+  buildDOW();
   buildTimeSelect(document.getElementById('time-from'), 9*60);
   buildTimeSelect(document.getElementById('time-to'), 17*60);
   buildTZSelect();
@@ -1504,10 +1681,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => c.style.display = 'none', 2000);
   });
   document.getElementById('email-btn').addEventListener('click', () => {
-    const subject = encodeURIComponent(`You're invited: ${S.eventName}`);
-    const body = encodeURIComponent(
-      `Hi,\n\nI'd like to find a time that works for everyone.\n\nPlease open the link below and mark when you're available:\n\n${window.location.href}\n\nThanks!`
-    );
+    const subject = encodeURIComponent(t().emailSubject(S.eventName));
+    const body    = encodeURIComponent(t().emailBody(S.eventName, window.location.href));
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   });
   document.addEventListener('dragstart', e => e.preventDefault());
@@ -1532,6 +1707,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         S.eventSlug     = hashId;
         const storedToken = sessionStorage.getItem('meteor-creator-' + hashId);
         S.isCreator = !!(storedToken && storedToken === data.creatorToken);
+        // Apply meeting language as default if user has no stored preference
+        if (!localStorage.getItem('lang') && data.lang && LANGS[data.lang]) {
+          currentLang = data.lang;
+        }
+        applyLang();
 
         // Restore participant from sessionStorage if they already joined
         const savedName = sessionStorage.getItem('meteor-user-' + hashId);
@@ -1547,7 +1727,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         // Event not found — show Screen A with a message
         const err = document.getElementById('cal-error');
-        err.textContent = 'Event not found. Create a new one below.';
+        err.textContent = t().notFound;
         err.style.display = 'block';
       }
     } catch(e) {
@@ -1556,6 +1736,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   initScreenA();
+  applyLang();
 });
 </script>
 </body>
