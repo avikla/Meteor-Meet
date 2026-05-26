@@ -270,7 +270,7 @@ body::after{
   position:fixed;
   background:#2a2a2f;
   border:1px solid rgba(255,255,255,0.25);
-  border-radius:6px;overflow-y:auto;max-height:200px;
+  border-radius:6px;overflow-y:auto;
   z-index:9999;scrollbar-width:thin;
 }
 .time-picker-list[hidden]{display:none}
@@ -1169,13 +1169,24 @@ function buildTimeSelect(listId, btnId, hiddenId, def) {
     const wasHidden = list.hidden;
     closeAllTimePickers();
     if (wasHidden) {
-      const r = btn.getBoundingClientRect();
-      list.style.top   = (r.bottom + 4) + 'px';
-      list.style.left  = r.left + 'px';
-      list.style.width = r.width + 'px';
+      const r      = btn.getBoundingClientRect();
+      const maxH   = 200;
+      const below  = window.innerHeight - r.bottom - 8;
+      const above  = r.top - 8;
+      const openUp = below < maxH && above > below;
+      list.style.left      = r.left + 'px';
+      list.style.width     = r.width + 'px';
+      list.style.maxHeight = Math.min(maxH, openUp ? above : below) + 'px';
+      if (openUp) {
+        list.style.top    = '';
+        list.style.bottom = (window.innerHeight - r.top + 4) + 'px';
+      } else {
+        list.style.top    = (r.bottom + 4) + 'px';
+        list.style.bottom = '';
+      }
       list.hidden = false;
       const sel = list.querySelector('.tp-option.selected');
-      if (sel) list.scrollTop = sel.offsetTop - (list.clientHeight - sel.offsetHeight) / 2;
+      if (sel) list.scrollTop = sel.offsetTop - (list.offsetHeight - sel.offsetHeight) / 2;
     }
   };
 }
