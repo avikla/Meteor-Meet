@@ -279,20 +279,18 @@ body::after{
 }
 .tp-option:hover{background:rgba(255,255,255,0.06)}
 .tp-option.selected{color:var(--accent);font-weight:500;background:rgba(0,214,143,0.08)}
-/* Styled select — timezone only */
-.styled-select{
-  width:100%;
-  background:rgba(255,255,255,0.04);
-  border:1px solid var(--border);border-radius:var(--r-sm);
-  padding:11px 32px 11px 12px;
-  color:var(--text);
-  font-family:var(--font-body);font-size:14px;font-weight:300;
-  outline:none;cursor:pointer;
-  appearance:none;-webkit-appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(240,236,228,0.35)' fill='none' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 12px center;
+.tp-search-wrap{
+  padding:6px 8px;position:sticky;top:0;
+  background:#2a2a2f;border-bottom:1px solid rgba(255,255,255,0.12);z-index:1;
 }
-.styled-select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);outline:none}
+.tp-search-input{
+  width:100%;background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.15);border-radius:4px;
+  padding:6px 10px;color:#fff;
+  font-family:var(--font-body);font-size:12px;outline:none;
+}
+.tp-search-input::placeholder{color:var(--muted2)}
+.tp-search-input:focus{border-color:var(--accent)}
 .tz-row{margin-top:16px}
 .tz-row .field-label{margin-bottom:6px}
 
@@ -704,8 +702,10 @@ body::after{
         </div>
       </div>
       <div class="tz-row">
-        <label class="field-label" for="tz-select" data-i18n="timezone">Time zone</label>
-        <select id="tz-select" class="styled-select"></select>
+        <label class="field-label" data-i18n="timezone">Time zone</label>
+        <button type="button" class="time-picker-btn" id="tp-tz-btn"></button>
+        <div class="time-picker-list" id="tp-tz-list"></div>
+        <input type="hidden" id="tz-select">
       </div>
     </div>
 
@@ -856,7 +856,7 @@ const LANGS = {
     step2:'Pick dates', modeSpecific:'Specific Dates', modeDays:'Days of Week',
     prevMonth:'Previous month', nextMonth:'Next month',
     errorDate:'Please select at least one date.', errorDay:'Please select at least one day.',
-    step3:'Set time range', noEarlier:'No earlier than', noLater:'No later than', timezone:'Time zone',
+    step3:'Set time range', noEarlier:'No earlier than', noLater:'No later than', timezone:'Time zone', tzSearch:'Search timezone…',
     createBtn:'Create Event &nbsp;&#8594;', creating:'Creating…',
     markAvail:'Mark your availability',
     markSub:"Enter your name, then drag across the grid to show when you're free.",
@@ -893,7 +893,7 @@ const LANGS = {
     step2:'בחירת תאריכים', modeSpecific:'תאריכים ספציפיים', modeDays:'ימי השבוע',
     prevMonth:'חודש קודם', nextMonth:'חודש הבא',
     errorDate:'יש לבחור לפחות תאריך אחד.', errorDay:'יש לבחור לפחות יום אחד.',
-    step3:'טווח שעות', noEarlier:'לא לפני', noLater:'לא אחרי', timezone:'אזור זמן',
+    step3:'טווח שעות', noEarlier:'לא לפני', noLater:'לא אחרי', timezone:'אזור זמן', tzSearch:'חיפוש אזור זמן…',
     createBtn:'&#8592; יצירת אירוע &nbsp;', creating:'יוצר…',
     markAvail:'סמן זמינות',
     markSub:'הכנס שם וגרור על הלוח כדי לסמן מתי אתה פנוי.',
@@ -1197,7 +1197,10 @@ function buildTimeSelects() {
 }
 
 function buildTZSelect() {
-  const sel = document.getElementById('tz-select');
+  const btn    = document.getElementById('tp-tz-btn');
+  const list   = document.getElementById('tp-tz-list');
+  const hidden = document.getElementById('tz-select');
+
   let tzs;
   try { tzs = Intl.supportedValuesOf('timeZone'); }
   catch(_) {
@@ -1207,12 +1210,75 @@ function buildTZSelect() {
            'Europe/Moscow','Asia/Jerusalem','Asia/Dubai','Asia/Kolkata',
            'Asia/Bangkok','Asia/Shanghai','Asia/Tokyo','Australia/Sydney','Pacific/Auckland'];
   }
-  tzs.forEach(tz => {
-    const o = document.createElement('option');
-    o.value = tz; o.textContent = tz.replace(/_/g,' ');
-    if (tz === S.timezone) o.selected = true;
-    sel.appendChild(o);
-  });
+
+  if (!list.querySelector('.tp-search-wrap')) {
+    const wrap  = document.createElement('div');
+    wrap.className = 'tp-search-wrap';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'tp-tz-search';
+    input.className = 'tp-search-input';
+    input.setAttribute('data-i18n-ph', 'tzSearch');
+    input.placeholder = t().tzSearch;
+    input.addEventListener('input', () => renderTZOptions(input.value));
+    input.addEventListener('click', e => e.stopPropagation());
+    wrap.appendChild(input);
+    list.appendChild(wrap);
+  }
+
+  function renderTZOptions(filter) {
+    list.querySelectorAll('.tp-option').forEach(el => el.remove());
+    const frag = document.createDocumentFragment();
+    const q = filter.toLowerCase();
+    tzs.forEach(tz => {
+      if (q && !tz.toLowerCase().includes(q)) return;
+      const row = document.createElement('div');
+      row.className = 'tp-option' + (tz === hidden.value ? ' selected' : '');
+      row.textContent = tz.replace(/_/g, ' ');
+      row.dataset.value = tz;
+      row.addEventListener('click', e => {
+        e.stopPropagation();
+        list.querySelectorAll('.tp-option').forEach(r => r.classList.remove('selected'));
+        row.classList.add('selected');
+        hidden.value = tz;
+        btn.textContent = tz.replace(/_/g, ' ');
+        list.style.display = 'none';
+      });
+      frag.appendChild(row);
+    });
+    list.appendChild(frag);
+  }
+
+  hidden.value = S.timezone;
+  btn.textContent = S.timezone.replace(/_/g, ' ');
+  renderTZOptions('');
+
+  btn.onclick = e => {
+    e.stopPropagation();
+    const isOpen = list.style.display === 'block';
+    closeAllTimePickers();
+    if (!isOpen) {
+      const r    = btn.getBoundingClientRect();
+      const maxH = 260;
+      const below = window.innerHeight - r.bottom - 4;
+      const above = r.top - 4;
+      const openUp = below < maxH && above > below;
+      list.style.left      = r.left + 'px';
+      list.style.width     = r.width + 'px';
+      list.style.maxHeight = Math.min(maxH, Math.max(openUp ? above : below, 100)) + 'px';
+      list.style.top       = openUp ? 'auto' : (r.bottom + 4) + 'px';
+      list.style.bottom    = openUp ? (window.innerHeight - r.top + 4) + 'px' : 'auto';
+      list.style.display   = 'block';
+      const search = document.getElementById('tp-tz-search');
+      search.value = '';
+      renderTZOptions('');
+      requestAnimationFrame(() => {
+        search.focus();
+        const sel = list.querySelector('.tp-option.selected');
+        if (sel) list.scrollTop = sel.offsetTop - (list.clientHeight - sel.offsetHeight) / 2;
+      });
+    }
+  };
 }
 
 // ══════════════════════════════════════
