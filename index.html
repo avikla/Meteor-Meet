@@ -587,6 +587,35 @@ body::after{
 [dir="rtl"] .lang-toggle{right:auto;left:16px}
 [dir="rtl"] .step-num{margin-right:0;margin-left:8px}
 [dir="rtl"] .you-badge{margin-right:4px;margin-left:0}
+
+/* ─── Link banner ─── */
+.link-banner{
+  position:relative;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--r);padding:14px 40px 14px 16px;
+  margin:12px 16px 0;display:flex;flex-direction:column;gap:10px;
+}
+.link-banner-url{
+  font-size:12px;color:var(--accent);word-break:break-all;
+  font-family:monospace;letter-spacing:0.02em;
+}
+.link-banner-email-row{display:flex;gap:8px}
+.link-banner-input{flex:1;font-size:13px;padding:7px 10px;height:34px}
+.link-banner-btn{
+  flex-shrink:0;background:var(--accent);color:#18181b;
+  border:none;border-radius:var(--r-sm);padding:0 14px;
+  font-size:12px;font-weight:600;cursor:pointer;height:34px;
+  transition:opacity 0.15s;
+}
+.link-banner-btn:hover{opacity:0.85}
+.link-banner-btn:disabled{opacity:0.5;cursor:default}
+.link-banner-status{font-size:12px;color:var(--muted);min-height:16px}
+.link-banner-close{
+  position:absolute;top:10px;right:10px;
+  background:none;border:none;color:var(--muted2);cursor:pointer;font-size:16px;
+}
+[dir="rtl"] .link-banner-close{right:auto;left:10px}
+[dir="rtl"] .link-banner-email-row{flex-direction:row-reverse}
 </style>
 </head>
 <body>
@@ -686,6 +715,18 @@ body::after{
     </div>
   </div>
 
+  <!-- Post-join link banner -->
+  <div id="link-banner" style="display:none" class="link-banner">
+    <div class="link-banner-url" id="link-banner-url"></div>
+    <div class="link-banner-email-row">
+      <input type="email" id="link-banner-email" class="text-input link-banner-input"
+        placeholder="Your email" data-i18n-ph="linkBannerEmailPH">
+      <button id="link-banner-send" class="link-banner-btn" data-i18n="linkBannerSend">Send</button>
+    </div>
+    <div id="link-banner-status" class="link-banner-status"></div>
+    <button id="link-banner-close" class="link-banner-close" aria-label="dismiss">&#10005;</button>
+  </div>
+
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-logo" data-i18n="appName">Meet Scheduler</div>
@@ -759,6 +800,11 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // ══════════════════════════════════════
+// ══════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════
+const GAS_MAILER_URL = 'YOUR_GAS_WEB_APP_URL'; // paste /exec URL after deploying mailer.gs
+
 // STATE
 // ══════════════════════════════════════
 const S = {
@@ -802,6 +848,10 @@ const LANGS = {
     bestEmpty:'Mark your availability to see best times',
     mobileNotice:'Best experienced on a wider screen', loading:'Loading…',
     youBadge:'you', clearBtn:'&#10005; Clear my times',
+    linkBannerEmailPH:"Your email — we'll send you this link",
+    linkBannerSend:'Send', linkBannerSending:'Sending…',
+    linkBannerSent:'&#10003; Sent! Check your inbox.',
+    linkBannerError:'Could not send — try again.',
     allPeople:(n)=>n===1?'All 1 person':`All ${n} people`,
     ofPeople:(x,n)=>n===1?`${x} of 1 person`:`${x} of ${n} people`,
     rejoinPrompt:(name)=>`"${name}" already joined this meeting. Continue as them?`,
@@ -835,6 +885,10 @@ const LANGS = {
     bestEmpty:'סמן זמינות כדי לראות את הזמנים הטובים ביותר',
     mobileNotice:'מומלץ לצפות במסך רחב יותר', loading:'טוען…',
     youBadge:'את/ה', clearBtn:'&#10005; נקה זמנים',
+    linkBannerEmailPH:'האימייל שלך — נשלח לך את הקישור',
+    linkBannerSend:'שלח', linkBannerSending:'שולח…',
+    linkBannerSent:'&#10003; נשלח! בדוק את תיבת הדואר שלך.',
+    linkBannerError:'שליחה נכשלה — נסה שוב.',
     allPeople:(n)=>n===1?'כל משתתף אחד':`כל ${n} המשתתפים`,
     ofPeople:(x,n)=>`${x} מתוך ${n}`,
     rejoinPrompt:(name)=>`"${name}" כבר הצטרף לפגישה. להמשיך בתור אותו משתמש?`,
@@ -1497,6 +1551,16 @@ function showTooltip(cell, e) {
 function hideTooltip() { tooltip.style.display = 'none'; }
 
 // ══════════════════════════════════════
+// SCREEN B: LINK BANNER
+// ══════════════════════════════════════
+function showLinkBanner() {
+  const banner = document.getElementById('link-banner');
+  document.getElementById('link-banner-url').textContent = window.location.href;
+  banner.style.display = 'flex';
+  applyLang();
+}
+
+// ══════════════════════════════════════
 // SCREEN B: NAME OVERLAY
 // ══════════════════════════════════════
 async function joinEvent() {
@@ -1545,6 +1609,7 @@ async function joinEvent() {
 
   renderParticipants();
   renderHeatmap();
+  showLinkBanner();
 }
 
 function resumeAsExisting(name) {
@@ -1559,6 +1624,7 @@ function resumeAsExisting(name) {
   setTimeout(() => { overlay.style.display = 'none'; }, 400);
   renderParticipants();
   renderHeatmap();
+  showLinkBanner();
 }
 
 // ══════════════════════════════════════
@@ -1738,6 +1804,44 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('loading-overlay').style.display = 'none';
     }
   }
+
+  // Link banner: close
+  document.getElementById('link-banner-close').addEventListener('click', () => {
+    document.getElementById('link-banner').style.display = 'none';
+  });
+
+  // Link banner: send via GAS mailer
+  document.getElementById('link-banner-send').addEventListener('click', async () => {
+    const email  = document.getElementById('link-banner-email').value.trim();
+    const status = document.getElementById('link-banner-status');
+    const btn    = document.getElementById('link-banner-send');
+
+    if (!email) return;
+
+    btn.disabled = true;
+    btn.textContent = t().linkBannerSending;
+
+    try {
+      const res = await fetch(GAS_MAILER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          to_email:    email,
+          event_name:  S.eventName,
+          meeting_url: window.location.href,
+        }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        status.textContent = t().linkBannerSent;
+        btn.textContent = '✓';
+      } else throw new Error(json.error);
+    } catch {
+      status.textContent = t().linkBannerError;
+      btn.disabled = false;
+      btn.textContent = t().linkBannerSend;
+    }
+  });
 
   initScreenA();
   applyLang();
