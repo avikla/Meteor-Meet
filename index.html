@@ -588,6 +588,12 @@ body::after{
 [dir="rtl"] .step-num{margin-right:0;margin-left:8px}
 [dir="rtl"] .you-badge{margin-right:4px;margin-left:0}
 
+/* ─── Sidebar email panel ─── */
+.email-panel{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.email-panel-row{display:flex;gap:6px}
+.email-panel-input{flex:1;font-size:12px;padding:6px 9px;height:32px}
+[dir="rtl"] .email-panel-row{flex-direction:row-reverse}
+
 /* ─── Link banner ─── */
 .link-banner{
   position:relative;
@@ -737,7 +743,15 @@ body::after{
     <div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">
       <button id="share-btn" class="sidebar-btn">&#128279; Copy meeting link</button>
       <span id="share-confirm" class="share-confirm" style="display:none">&#10003; Copied!</span>
-      <button id="email-btn" class="sidebar-btn sidebar-btn-outline">&#9993; Send via email</button>
+      <button id="email-btn" class="sidebar-btn sidebar-btn-outline" data-i18n="sendEmail">&#9993; Send via email</button>
+      <div id="email-panel" style="display:none" class="email-panel">
+        <div class="email-panel-row">
+          <input type="email" id="email-panel-input" class="text-input email-panel-input"
+            placeholder="Recipient's email" data-i18n-ph="emailBtnPH">
+          <button id="email-panel-send" class="link-banner-btn" data-i18n="linkBannerSend">Send</button>
+        </div>
+        <div id="email-panel-status" class="link-banner-status"></div>
+      </div>
     </div>
     <button id="new-event-btn" class="new-event-btn">&#8592; New event</button>
     <p class="dev-footer" style="font-size:11px;text-align:left">Avi Klayman &mdash; <a href="mailto:avi@meteor.co.il">avi@meteor.co.il</a><br><a href="terms.html">Terms &amp; Privacy</a></p>
@@ -848,6 +862,7 @@ const LANGS = {
     bestEmpty:'Mark your availability to see best times',
     mobileNotice:'Best experienced on a wider screen', loading:'Loading…',
     youBadge:'you', clearBtn:'&#10005; Clear my times',
+    emailBtnPH:"Recipient's email",
     linkBannerEmailPH:"Your email — we'll send you this link",
     linkBannerSend:'Send', linkBannerSending:'Sending…',
     linkBannerSent:'&#10003; Sent! Check your inbox.',
@@ -885,6 +900,7 @@ const LANGS = {
     bestEmpty:'סמן זמינות כדי לראות את הזמנים הטובים ביותר',
     mobileNotice:'מומלץ לצפות במסך רחב יותר', loading:'טוען…',
     youBadge:'את/ה', clearBtn:'&#10005; נקה זמנים',
+    emailBtnPH:'אימייל של הנמען',
     linkBannerEmailPH:'האימייל שלך — נשלח לך את הקישור',
     linkBannerSend:'שלח', linkBannerSending:'שולח…',
     linkBannerSent:'&#10003; נשלח! בדוק את תיבת הדואר שלך.',
@@ -1751,9 +1767,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => c.style.display = 'none', 2000);
   });
   document.getElementById('email-btn').addEventListener('click', () => {
-    const subject = encodeURIComponent(t().emailSubject(S.eventName));
-    const body    = encodeURIComponent(t().emailBody(S.eventName, window.location.href));
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    const panel = document.getElementById('email-panel');
+    panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+    if (panel.style.display === 'flex')
+      document.getElementById('email-panel-input').focus();
+  });
+
+  document.getElementById('email-panel-send').addEventListener('click', async () => {
+    const email  = document.getElementById('email-panel-input').value.trim();
+    const status = document.getElementById('email-panel-status');
+    const btn    = document.getElementById('email-panel-send');
+
+    if (!email) return;
+
+    btn.disabled = true;
+    btn.textContent = t().linkBannerSending;
+
+    try {
+      const res = await fetch(GAS_MAILER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          to_email:    email,
+          event_name:  S.eventName,
+          meeting_url: window.location.href,
+          subject:     t().emailSubject(S.eventName),
+          body:        t().emailBody(S.eventName, window.location.href),
+        }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        status.textContent = t().linkBannerSent;
+        btn.textContent = '✓';
+      } else throw new Error(json.error);
+    } catch {
+      status.textContent = t().linkBannerError;
+      btn.disabled = false;
+      btn.textContent = t().linkBannerSend;
+    }
   });
   document.addEventListener('dragstart', e => e.preventDefault());
 

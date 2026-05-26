@@ -1,16 +1,15 @@
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-    const { to_email, event_name, meeting_url } = data;
+    const { to_email, event_name, meeting_url, subject, body } = data;
 
     GmailApp.sendEmail(
       to_email,
-      `Your meeting link: ${event_name}`,
-      `Hi,\n\nHere is your meeting link:\n${meeting_url}\n\nSee you there!`,
+      subject || `Your meeting link: ${event_name}`,
+      body    || `Hi,\n\nHere is your meeting link:\n${meeting_url}\n\nSee you there!`,
       {
         name: 'Meteor Meet',
-        // Uncomment after adding no-reply@meet.meteor.co.il as a Gmail alias:
-        // from: 'no-reply@meet.meteor.co.il',
+        from: 'no-reply@meteor.co.il',
       }
     );
 
