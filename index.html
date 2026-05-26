@@ -1145,6 +1145,9 @@ function buildTimeSelect(listId, btnId, hiddenId, def) {
   const btn    = document.getElementById(btnId);
   const hidden = document.getElementById(hiddenId);
 
+  // Move to body so position:fixed is viewport-relative (cards have transform from fadeUp animation)
+  document.body.appendChild(list);
+
   list.innerHTML = '';
   for (let m = 0; m < 24 * 60; m += 30) {
     const row = document.createElement('div');
@@ -1200,6 +1203,9 @@ function buildTZSelect() {
   const btn    = document.getElementById('tp-tz-btn');
   const list   = document.getElementById('tp-tz-list');
   const hidden = document.getElementById('tz-select');
+
+  // Move to body so position:fixed is viewport-relative (cards have transform from fadeUp animation)
+  document.body.appendChild(list);
 
   let tzs;
   try { tzs = Intl.supportedValuesOf('timeZone'); }
