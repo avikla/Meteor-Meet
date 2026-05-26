@@ -1929,7 +1929,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       const json = await res.json();
       if (json.ok) {
-        status.textContent = t().linkBannerSent;
+        status.innerHTML = t().linkBannerSent;
         btn.textContent = '✓';
       } else throw new Error(json.error);
     } catch {
