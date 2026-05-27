@@ -19,8 +19,8 @@
   --surface2:#1e2a40;
   --border:rgba(255,255,255,0.13);
   --border2:rgba(255,255,255,0.22);
-  --text:#e8edf5;
-  --muted:#7a8fab;
+  --text:#f5f7fb;
+  --muted:#a0b4c8;
   --muted2:#6b82a0;
   --accent:#00d68f;
   --accent-glow:rgba(0,214,143,0.12);
@@ -79,7 +79,7 @@ body::after{
 
 .tagline{
   font-family:var(--font-display);
-  font-size:15px;font-weight:300;
+  font-size:15px;font-weight:400;
   color:var(--muted);margin-top:6px;
 }
 .tagline em{color:var(--accent);font-style:italic;font-size:1em}
@@ -150,7 +150,7 @@ body::after{
   padding:13px 16px;
   color:var(--text);
   font-family:var(--font-body);
-  font-size:15px;font-weight:300;
+  font-size:15px;font-weight:400;
   outline:none;
   transition:border-color 0.2s,box-shadow 0.2s;
 }
@@ -226,7 +226,7 @@ body::after{
   letter-spacing:0.02em;
 }
 .chip-count{
-  margin-left:4px;opacity:0.6;font-weight:300;
+  margin-left:4px;opacity:0.6;font-weight:400;
 }
 
 /* Days of week */
@@ -246,7 +246,7 @@ body::after{
 /* Time + timezone */
 .time-row{display:flex;align-items:flex-end;gap:10px}
 .time-field{flex:1;position:relative}
-.time-sep{color:var(--muted);font-size:22px;font-weight:300;margin-bottom:7px;flex-shrink:0}
+.time-sep{color:var(--muted);font-size:22px;font-weight:400;margin-bottom:7px;flex-shrink:0}
 .field-label{
   display:block;
   font-size:12px;font-weight:500;
@@ -259,7 +259,7 @@ body::after{
   background:rgba(255,255,255,0.04);
   border:1px solid var(--border);border-radius:var(--r-sm);
   padding:11px 32px 11px 12px;
-  color:var(--text);font-family:var(--font-body);font-size:14px;font-weight:300;
+  color:var(--text);font-family:var(--font-body);font-size:14px;font-weight:400;
   text-align:left;cursor:pointer;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(240,236,228,0.35)' fill='none' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 12px center;
@@ -275,7 +275,7 @@ body::after{
   z-index:9999;scrollbar-width:thin;
 }
 .tp-option{
-  padding:9px 14px;font-size:13px;font-weight:300;color:var(--text);
+  padding:9px 14px;font-size:13px;font-weight:400;color:var(--text);
   cursor:pointer;transition:background 0.1s;
 }
 .tp-option:hover{background:rgba(255,255,255,0.06)}
@@ -358,7 +358,7 @@ body::after{
   margin-bottom:8px;
 }
 .name-panel-sub{
-  font-size:15px;font-weight:300;
+  font-size:15px;font-weight:400;
   color:var(--muted);margin-bottom:28px;line-height:1.6;
 }
 .join-btn{
@@ -407,7 +407,7 @@ body::after{
   color:var(--muted);
 }
 .participant-list{display:flex;flex-direction:column;gap:8px}
-.participant-item{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:300}
+.participant-item{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:400}
 .p-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .you-badge{font-size:10px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);opacity:0.75;margin-left:2px}
 .people-count{font-size:11px;font-weight:600;background:var(--accent-glow);border:1px solid var(--accent-dim);color:var(--accent);border-radius:10px;padding:1px 7px;letter-spacing:0.03em}
@@ -419,7 +419,7 @@ body::after{
 .rejoin-confirm-btn{font-family:var(--font-body);font-size:12px;font-weight:500;background:transparent;border:1px solid var(--accent-dim);border-radius:var(--r-sm);padding:6px 14px;color:var(--accent);cursor:pointer;transition:background 0.15s}
 .rejoin-confirm-btn:hover{background:var(--accent-glow)}
 .sidebar-hint{
-  font-size:13px;font-weight:300;
+  font-size:13px;font-weight:400;
   color:var(--muted);line-height:1.6;
   border-top:1px solid var(--border);
   padding-top:16px;margin-top:auto;
@@ -438,7 +438,7 @@ body::after{
 .best-times-section{flex-shrink:0;border-top:1px solid var(--border);padding-top:12px;max-height:28vh;overflow:hidden}
 .bt-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .bt-label{font-size:12px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
-.bt-empty{font-size:12px;color:var(--muted2);font-weight:300}
+.bt-empty{font-size:12px;color:var(--muted2);font-weight:400}
 .bt-cards{display:flex;gap:10px;overflow-x:auto}
 .bt-card{
   flex:1;min-width:140px;max-width:33%;
@@ -516,7 +516,7 @@ body::after{
 /* Mobile */
 .mobile-notice{
   display:none;text-align:center;
-  font-size:11.5px;font-weight:300;
+  font-size:11.5px;font-weight:400;
   color:var(--muted2);padding:6px;
 }
 @media(max-width:640px){
@@ -815,7 +815,7 @@ body::after{
 
 <!-- Loading overlay (shown while fetching event from Firestore) -->
 <div id="loading-overlay" style="position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:9000">
-  <div style="color:var(--accent);font-family:'Outfit',sans-serif;font-size:18px;font-weight:300;letter-spacing:0.15em;opacity:0.8" data-i18n="loading">Loading…</div>
+  <div style="color:var(--accent);font-family:'Outfit',sans-serif;font-size:18px;font-weight:400;letter-spacing:0.15em;opacity:0.8" data-i18n="loading">Loading…</div>
 </div>
 
 <script>
