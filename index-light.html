@@ -14,7 +14,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 :root{
-  --bg:#f7f9fb;
+  --bg:#f0f4f8;
   --surface:#ffffff;
   --surface2:#f5f8fb;
   --border:rgba(15,22,35,0.10);
@@ -596,7 +596,7 @@ body::after{
   letter-spacing:0.04em;
 }
 .new-event-btn:hover{color:var(--accent);border-color:var(--accent-dim)}
-.new-event-btn .nav-arrow{font-size:1.47em;line-height:1}
+.new-event-btn .nav-arrow{font-size:2.1em;line-height:1}
 .new-event-wrap{border-top:1px solid var(--border);padding-top:10px;margin-top:4px}
 .btn-icon{font-variant-emoji:text}
 .dev-footer{flex-shrink:0;text-align:center;font-size:12px;font-weight:400;color:var(--muted);padding:12px 0 6px;letter-spacing:0.02em;line-height:1.6;border-top:1px solid rgba(15,22,35,0.18);margin-top:6px}
@@ -775,7 +775,7 @@ body::after{
         </div>
         <div id="email-panel-status" class="link-banner-status"></div>
       </div>
-      <button id="best-times-email-btn" class="sidebar-btn" data-i18n="sendBestTimes">📊 Send best times</button>
+      <button id="best-times-email-btn" class="sidebar-btn" data-i18n="sendBestTimes">&#128202; Send best times</button>
       <div id="best-times-email-panel" style="display:none" class="email-panel">
         <div class="email-panel-row">
           <input type="email" id="best-times-email-input" class="text-input email-panel-input"
@@ -896,7 +896,7 @@ const LANGS = {
     bestEmpty:'Mark your availability to see best times',
     mobileNotice:'Best experienced on a wider screen', loading:'Loading…',
     youBadge:'you', clearBtn:'&#10005; Clear my times',
-    sendBestTimes:'📊 Send best times',
+    sendBestTimes:'&#128202; Send best times',
     bestTimesSubject:(name)=>`Best times for: ${name}`,
     bestTimesBody:(name,url)=>`Hi,\n\nHere are the best meeting times for: ${name}\n\n${url}\n\nThanks!`,
     emailBtnPH:"Recipient's email",
@@ -936,7 +936,7 @@ const LANGS = {
     bestEmpty:'סמן זמינות כדי לראות את הזמנים הטובים ביותר',
     mobileNotice:'מומלץ לצפות במסך רחב יותר', loading:'טוען…',
     youBadge:'את/ה', clearBtn:'&#10005; נקה זמנים',
-    sendBestTimes:'📊 שלח זמנים מומלצים',
+    sendBestTimes:'&#128202; שלח זמנים מומלצים',
     bestTimesSubject:(name)=>`זמנים מומלצים עבור: ${name}`,
     bestTimesBody:(name,url)=>`שלום,\n\nהזמנים המומלצים לפגישה: ${name}\n\n${url}\n\nתודה!`,
     emailBtnPH:'אימייל של הנמען',
