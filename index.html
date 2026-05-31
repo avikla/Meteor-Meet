@@ -712,8 +712,6 @@ body::after{
     <div id="step-progress" style="display:flex;justify-content:center;gap:8px;padding:4px 0 8px">
       <span class="step-dot active" data-step="1"></span>
       <span class="step-dot" data-step="2"></span>
-      <span class="step-dot" data-step="3"></span>
-      <span class="step-dot" data-step="4"></span>
     </div>
 
     <!-- Step 1: Name -->
@@ -779,7 +777,7 @@ body::after{
     </div>
 
     <!-- Step 4: Organizer details -->
-    <div class="card" style="--d:.38s;display:none" data-step="4">
+    <div class="card" style="--d:.38s" data-step="4">
       <div class="step-label"><span class="step-num">04</span><span data-i18n="step4">Who's organizing this?</span></div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
         <input type="text" id="creator-name" class="text-input"
@@ -1168,18 +1166,21 @@ const CELL_FULL  = [0, 214, 143];
 // ══════════════════════════════════════
 let calDragging = false, calDragMode = 'add';
 
-function renderCalendar() {
-  const grid  = document.getElementById('calendar-grid');
-  const label = document.getElementById('cal-month-label');
-  const { calYear: y, calMonth: m } = S;
+function renderMonthBlock(container, year, month, todayStr) {
+  const wrapper = document.createElement('div');
+  wrapper.style.marginBottom = '12px';
 
-  label.textContent = `${t().months[m]} ${y}`;
+  const label = document.createElement('div');
+  label.textContent = `${t().months[month]} ${year}`;
+  label.style.cssText = 'text-align:center;font-size:13px;font-weight:700;color:var(--text);margin:4px 0 8px';
+  wrapper.appendChild(label);
 
-  const firstDow = new Date(y, m, 1).getDay();
-  const daysInMonth = new Date(y, m + 1, 0).getDate();
-  const todayStr = isoDate(new Date());
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(7,1fr);gap:2px';
 
-  grid.innerHTML = '';
+  const firstDow = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
   t().daysShort.forEach(d => {
     const el = document.createElement('div');
     el.className = 'cal-header';
@@ -1194,7 +1195,7 @@ function renderCalendar() {
   }
 
   for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const el = document.createElement('div');
     el.className = 'cal-cell';
     if (S.selectedDates.has(dateStr)) el.classList.add('selected');
@@ -1206,13 +1207,50 @@ function renderCalendar() {
     el.addEventListener('mouseenter', onCalEnter);
     grid.appendChild(el);
   }
-  // Hide rows that are entirely past or empty
+
+  wrapper.appendChild(grid);
+  container.appendChild(wrapper);
+
+  // Hide rows that are entirely past or empty within this month
   const allCells = [...grid.querySelectorAll('.cal-cell:not(.cal-header)')];
   for (let i = 0; i < allCells.length; i += 7) {
     const row = allCells.slice(i, i + 7);
     const allPastOrEmpty = row.every(c => c.classList.contains('past') || c.classList.contains('empty'));
     if (allPastOrEmpty) row.forEach(c => c.style.display = 'none');
   }
+}
+
+function renderCalendar() {
+  const grid = document.getElementById('calendar-grid');
+  const label = document.getElementById('cal-month-label');
+  const today = new Date();
+  const todayStr = isoDate(today);
+  const { calYear: y, calMonth: m } = S;
+
+  grid.innerHTML = '';
+  grid.style.display = 'block';
+
+  // Check if we should show dual-month
+  const daysInCurrentMonth = new Date(y, m + 1, 0).getDate();
+  const isCurrentMonth = y === today.getFullYear() && m === today.getMonth();
+  const remainingDays = daysInCurrentMonth - today.getDate() + 1;
+  const showDual = isCurrentMonth && remainingDays <= 7;
+
+  renderMonthBlock(grid, y, m, todayStr);
+  if (showDual) {
+    const nextMonth = m === 11 ? 0 : m + 1;
+    const nextYear = m === 11 ? y + 1 : y;
+    renderMonthBlock(grid, nextYear, nextMonth, todayStr);
+  }
+
+  // Update month label
+  if (showDual) {
+    const nextMonth = m === 11 ? 0 : m + 1;
+    label.textContent = `${t().months[m]} – ${t().months[nextMonth]} ${y}`;
+  } else {
+    label.textContent = `${t().months[m]} ${y}`;
+  }
+
   renderChips();
 }
 
@@ -2106,16 +2144,20 @@ async function clearMyTimes() {
 }
 
 function goToStep(n) {
-  const steps = [null,
-    document.querySelector('.card[data-step="1"]'),
-    document.querySelector('.card[data-step="2"]'),
-    document.querySelector('.card[data-step="3"]'),
-    document.querySelector('.card[data-step="4"]'),
-  ];
-  steps.slice(1).forEach((c, i) => c.style.display = (i + 1 === n) ? '' : 'none');
+  const s1 = document.querySelector('.card[data-step="1"]');
+  const s2 = document.querySelector('.card[data-step="2"]');
+  const s3 = document.querySelector('.card[data-step="3"]');
+  const s4 = document.querySelector('.card[data-step="4"]');
+  if (n === 1) {
+    s1.style.display = ''; s4.style.display = '';
+    s2.style.display = 'none'; s3.style.display = 'none';
+  } else {
+    s1.style.display = 'none'; s4.style.display = 'none';
+    s2.style.display = ''; s3.style.display = '';
+  }
   document.querySelectorAll('.step-dot').forEach((d, i) => d.classList.toggle('active', (i + 1 === n)));
   document.getElementById('back-btn').style.display = (n === 1) ? 'none' : '';
-  document.getElementById('create-btn').innerHTML = (n === 4) ? t().createBtn : t().nextBtn;
+  document.getElementById('create-btn').innerHTML = (n === 2) ? t().createBtn : t().nextBtn;
   S.currentStep = n;
   document.querySelector('.create-form').scrollTop = 0;
 }
@@ -2123,7 +2165,7 @@ function goToStep(n) {
 function handleNextOrCreate() {
   const lang = t();
   if (S.currentStep === 1) {
-    // Validate event name
+    // Page 1: Validate event name + creator name + email
     const nameInput = document.getElementById('event-name');
     const eventName = nameInput.value.trim();
     const nameErr = document.getElementById('event-name-err') || document.createElement('div');
@@ -2141,42 +2183,27 @@ function handleNextOrCreate() {
       return;
     }
     if (nameErr.parentNode) nameErr.parentNode.removeChild(nameErr);
-    goToStep(2);
-  } else if (S.currentStep === 2) {
-    // Validate date selection
-    const hasSelection = S.mode === 'specific' ? S.selectedDates.size > 0 : S.selectedDays.size > 0;
-    const errId = S.mode === 'specific' ? 'cal-error' : 'dow-error';
-    const errEl = document.getElementById(errId);
-    if (!hasSelection) {
-      errEl.style.display = '';
-      return;
-    }
-    errEl.style.display = 'none';
-    goToStep(3);
-  } else if (S.currentStep === 3) {
-    // No validation needed for time range (always valid)
-    goToStep(4);
-  } else if (S.currentStep === 4) {
-    // Validate creator name and email, then create
+
+    // Validate creator name and email
     const creatorName = document.getElementById('creator-name').value.trim();
     const creatorEmail = document.getElementById('creator-email').value.trim();
-    const nameErrEl = document.getElementById('creator-name-err');
-    const emailErrEl = document.getElementById('creator-email-err');
+    const creatorNameErrEl = document.getElementById('creator-name-err');
+    const creatorEmailErrEl = document.getElementById('creator-email-err');
     let valid = true;
     if (!creatorName) {
-      nameErrEl.textContent = lang.creatorNameErr;
-      nameErrEl.style.display = '';
+      creatorNameErrEl.textContent = lang.creatorNameErr;
+      creatorNameErrEl.style.display = '';
       valid = false;
     } else {
-      nameErrEl.style.display = 'none';
+      creatorNameErrEl.style.display = 'none';
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(creatorEmail)) {
-      emailErrEl.textContent = lang.creatorEmailErr;
-      emailErrEl.style.display = '';
+      creatorEmailErrEl.textContent = lang.creatorEmailErr;
+      creatorEmailErrEl.style.display = '';
       valid = false;
     } else {
-      emailErrEl.style.display = 'none';
+      creatorEmailErrEl.style.display = 'none';
     }
     if (!valid) {
       document.getElementById('creator-name').classList.add('shake');
@@ -2187,6 +2214,17 @@ function handleNextOrCreate() {
       }, 500);
       return;
     }
+    goToStep(2);
+  } else if (S.currentStep === 2) {
+    // Page 2: Validate date selection then create
+    const hasSelection = S.mode === 'specific' ? S.selectedDates.size > 0 : S.selectedDays.size > 0;
+    const errId = S.mode === 'specific' ? 'cal-error' : 'dow-error';
+    const errEl = document.getElementById(errId);
+    if (!hasSelection) {
+      errEl.style.display = '';
+      return;
+    }
+    errEl.style.display = 'none';
     // Validation passed, proceed to create event
     createEvent();
   }
@@ -2196,6 +2234,7 @@ function handleNextOrCreate() {
 // SCREEN A: INIT
 // ══════════════════════════════════════
 function initScreenA() {
+  goToStep(1);
   renderCalendar();
   document.getElementById('cal-prev').addEventListener('click', () => {
     S.calMonth--; if (S.calMonth < 0) { S.calMonth = 11; S.calYear--; }
