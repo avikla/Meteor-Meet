@@ -1616,7 +1616,8 @@ const db = firebase.firestore();
 // ══════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════
-const GAS_MAILER_URL = 'https://script.google.com/macros/s/AKfycbz7hknVlxm_K7RdFBV1gd7MbBz3KYsq7PQ2UgqHHByTxM2PI2W21T8p3sZ6qIenPMPDNg/exec';
+const MAILER_FUNCTION_URL = 'https://us-central1-meteor-meet.cloudfunctions.net/sendMail';
+const WHENFREE_MAIL_KEY = '96dd0d68afbae35f14a66160f28602529ff1e6752d489e46';
 
 // STATE
 // ══════════════════════════════════════
@@ -2846,9 +2847,9 @@ function renderBestTimes() {
 }
 
 async function sendEmailViaGAS(toEmail, subject, body, htmlBody, eventName, meetingUrl) {
-  const res = await fetch(GAS_MAILER_URL, {
+  const res = await fetch(MAILER_FUNCTION_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
+    headers: { 'Content-Type': 'text/plain', 'X-WhenFree-Key': WHENFREE_MAIL_KEY },
     body: JSON.stringify({
       to_email: toEmail,
       event_name: eventName,
