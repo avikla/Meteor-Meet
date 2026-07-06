@@ -39,6 +39,13 @@ async function sendAlert(toEmail, subject, detail) {
 
 async function sendMail(req, res) {
   res.set('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+  res.set('Access-Control-Allow-Methods', 'POST');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, X-WhenFree-Key');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
 
   if (!checkAuth(req)) {
     res.status(403).json({ ok: false, error: 'forbidden' });
