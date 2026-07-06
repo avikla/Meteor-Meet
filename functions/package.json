@@ -1,0 +1,14 @@
+{
+  "name": "whenfree-mailer",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "engines": { "node": "20" },
+  "scripts": {
+    "test": "node --test",
+    "start": "npx @google-cloud/functions-framework --target=sendMail"
+  },
+  "devDependencies": {
+    "@google-cloud/functions-framework": "^3.4.0"
+  }
+}
