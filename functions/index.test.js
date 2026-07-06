@@ -1,7 +1,21 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { checkAuth, buildZeptoPayload } = require('./index.js');
+const { checkAuth, buildZeptoPayload, parseRequestBody } = require('./index.js');
+
+test('parseRequestBody parses a raw JSON string body (text/plain content-type)', () => {
+  const req = { body: '{"to_email":"a@example.com","event_name":"Test"}' };
+  const data = parseRequestBody(req);
+  assert.equal(data.to_email, 'a@example.com');
+  assert.equal(data.event_name, 'Test');
+});
+
+test('parseRequestBody passes through an already-parsed object body', () => {
+  const req = { body: { to_email: 'b@example.com', event_name: 'Test2' } };
+  const data = parseRequestBody(req);
+  assert.equal(data.to_email, 'b@example.com');
+  assert.equal(data.event_name, 'Test2');
+});
 
 test('checkAuth accepts matching header', () => {
   process.env.WHENFREE_MAIL_KEY = 'test-key-123';

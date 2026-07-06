@@ -6,6 +6,10 @@ function checkAuth(req) {
   return req.get('X-WhenFree-Key') === process.env.WHENFREE_MAIL_KEY;
 }
 
+function parseRequestBody(req) {
+  return typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+}
+
 function buildZeptoPayload({ to_email, event_name, meeting_url, subject, body, html_body }) {
   return {
     from: FROM,
@@ -52,8 +56,9 @@ async function sendMail(req, res) {
     return;
   }
 
-  const { to_email, subject } = req.body;
-  const payload = buildZeptoPayload(req.body);
+  const data = parseRequestBody(req);
+  const { to_email, subject } = data;
+  const payload = buildZeptoPayload(data);
 
   try {
     const response = await fetch(ZEPTO_ENDPOINT, {
@@ -81,4 +86,4 @@ async function sendMail(req, res) {
   }
 }
 
-module.exports = { checkAuth, buildZeptoPayload, sendMail, FROM };
+module.exports = { checkAuth, buildZeptoPayload, parseRequestBody, sendMail, FROM };
