@@ -16,4 +16,62 @@ function buildZeptoPayload({ to_email, event_name, meeting_url, subject, body, h
   };
 }
 
-module.exports = { checkAuth, buildZeptoPayload, FROM };
+const ZEPTO_ENDPOINT = 'https://api.zeptomail.com/v1.1/email';
+const ALERT_EMAIL = 'avi.klayman@gmail.com';
+const ALLOWED_ORIGIN = 'https://whenfree.org';
+
+async function sendAlert(toEmail, subject, detail) {
+  await fetch(ZEPTO_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Authorization': process.env.ZEPTO_API_KEY,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: FROM,
+      to: [{ email_address: { address: ALERT_EMAIL } }],
+      subject: 'WhenFree · Mail send failed',
+      textbody: `To: ${toEmail}\nSubject: ${subject}\n\nDetail:\n${detail}`,
+    }),
+  }).catch(() => {});
+}
+
+async function sendMail(req, res) {
+  res.set('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+
+  if (!checkAuth(req)) {
+    res.status(403).json({ ok: false, error: 'forbidden' });
+    return;
+  }
+
+  const { to_email, subject } = req.body;
+  const payload = buildZeptoPayload(req.body);
+
+  try {
+    const response = await fetch(ZEPTO_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Authorization': process.env.ZEPTO_API_KEY,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const bodyText = await response.text();
+    if (response.status < 200 || response.status >= 300) {
+      await sendAlert(to_email, subject, bodyText);
+      res.status(200).json({ ok: false, error: `ZeptoMail HTTP ${response.status}`, detail: bodyText });
+      return;
+    }
+
+    const result = JSON.parse(bodyText);
+    res.status(200).json({ ok: true, messageId: result.request_id });
+  } catch (err) {
+    await sendAlert(to_email, subject, err.message);
+    res.status(200).json({ ok: false, error: err.message });
+  }
+}
+
+module.exports = { checkAuth, buildZeptoPayload, sendMail, FROM };
