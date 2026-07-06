@@ -472,6 +472,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflo
   color:var(--text);
   letter-spacing:-0.01em;
   line-height:1.2;
+  text-align:left;
 }
 .sidebar-section{display:flex;flex-direction:column;gap:10px}
 .sidebar-sec-label{
@@ -943,6 +944,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflo
 
 /* RTL overrides — browser handles most automatically; these cover explicit directional values */
 [dir="rtl"] .dev-footer{text-align:center}
+[dir="rtl"] .grid-event-title{text-align:right}
 [dir="rtl"] .sidebar{border-right:none;border-left:1px solid var(--border)}
 [dir="rtl"] .participant-row,[dir="rtl"] .participant-item{flex-direction:row-reverse}
 [dir="rtl"] .step-header{justify-content:flex-start;gap:12px}
