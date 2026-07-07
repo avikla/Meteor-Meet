@@ -2849,6 +2849,7 @@ function renderBestTimes() {
 async function sendEmailViaGAS(toEmail, subject, body, htmlBody, eventName, meetingUrl) {
   const res = await fetch(MAILER_FUNCTION_URL, {
     method: 'POST',
+    keepalive: true,
     headers: { 'Content-Type': 'text/plain', 'X-WhenFree-Key': WHENFREE_MAIL_KEY },
     body: JSON.stringify({
       to_email: toEmail,
@@ -2881,17 +2882,33 @@ async function sendCreatorConfirmationEmail(creatorName, toEmail, eventName, mee
 }
 
 let _notifyTimer = null;
+let _pendingNotifyName = null;
+function fireNotifyOrganizer(participantName) {
+  const subject  = t().notifySubject(participantName, S.eventName);
+  const body     = t().notifyBody(participantName, S.eventName, window.location.href);
+  const htmlBody = t().notifyHtml(participantName, S.eventName, window.location.href);
+  sendEmailViaGAS(S.creatorEmail, subject, body, htmlBody, S.eventName, window.location.href)
+    .catch(() => {});
+}
 function scheduleNotifyOrganizer(participantName) {
   if (S.isCreator || !S.notifyOnResponse || !S.creatorEmail) return;
   clearTimeout(_notifyTimer);
+  _pendingNotifyName = participantName;
   _notifyTimer = setTimeout(() => {
-    const subject  = t().notifySubject(participantName, S.eventName);
-    const body     = t().notifyBody(participantName, S.eventName, window.location.href);
-    const htmlBody = t().notifyHtml(participantName, S.eventName, window.location.href);
-    sendEmailViaGAS(S.creatorEmail, subject, body, htmlBody, S.eventName, window.location.href)
-      .catch(() => {});
+    _pendingNotifyName = null;
+    fireNotifyOrganizer(participantName);
   }, 120000);
 }
+// Debounce timer above is destroyed if the tab is closed/backgrounded before it fires,
+// which silently drops the notification since most participants mark cells and leave.
+// `keepalive` lets the fetch in fireNotifyOrganizer complete after unload.
+window.addEventListener('pagehide', () => {
+  if (_pendingNotifyName === null) return;
+  clearTimeout(_notifyTimer);
+  const name = _pendingNotifyName;
+  _pendingNotifyName = null;
+  fireNotifyOrganizer(name);
+});
 
 function showCreatorEmailError(toEmail, eventName, meetingUrl, creatorName) {
   const banner = document.getElementById('creator-email-fail');
