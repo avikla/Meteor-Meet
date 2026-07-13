@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XML_DIZ_INFO>
+	<MASTER_PAD_VERSION_INFO>
+		<MASTER_PAD_VERSION>4.0</MASTER_PAD_VERSION>
+		<MASTER_PAD_EDITOR>Hand-authored for whenfree.org</MASTER_PAD_EDITOR>
+		<MASTER_PAD_INFO>Portable Application Description, or PAD for short, is a data set that is used by software authors to disseminate information about their products. To find out more go to http://pad.asp-software.org</MASTER_PAD_INFO>
+	</MASTER_PAD_VERSION_INFO>
+	<Company_Info>
+		<Company_Name>Klayman Meteor Ltd.</Company_Name>
+		<Address_1>5 Snir St.</Address_1>
+		<Address_2></Address_2>
+		<City_Town>Ramat-Hasharon</City_Town>
+		<State_Province></State_Province>
+		<Zip_Postal_Code>4704071</Zip_Postal_Code>
+		<Country>Israel</Country>
+		<Company_WebSite_URL>https://whenfree.org</Company_WebSite_URL>
+		<Contact_Info>
+			<Author_First_Name>Avi</Author_First_Name>
+			<Author_Last_Name>Klayman</Author_Last_Name>
+			<Author_Email>avi@whenfree.org</Author_Email>
+			<Contact_First_Name>Avi</Contact_First_Name>
+			<Contact_Last_Name>Klayman</Contact_Last_Name>
+			<Contact_Email>avi@whenfree.org</Contact_Email>
+		</Contact_Info>
+		<Support_Info>
+			<Sales_Email>avi@whenfree.org</Sales_Email>
+			<Support_Email>avi@whenfree.org</Support_Email>
+			<General_Email>avi@whenfree.org</General_Email>
+			<Sales_Phone></Sales_Phone>
+			<Support_Phone></Support_Phone>
+			<General_Phone></General_Phone>
+			<Fax_Phone></Fax_Phone>
+		</Support_Info>
+	</Company_Info>
+	<Program_Info>
+		<Program_Name>WhenFree</Program_Name>
+		<Program_Version>1.0</Program_Version>
+		<Program_Release_Month>07</Program_Release_Month>
+		<Program_Release_Day>13</Program_Release_Day>
+		<Program_Release_Year>2026</Program_Release_Year>
+		<Program_Cost_Dollars>0.00</Program_Cost_Dollars>
+		<Program_Cost_Other_Code>USD</Program_Cost_Other_Code>
+		<Program_Cost_Other>0.00</Program_Cost_Other>
+		<Program_Type>Freeware</Program_Type>
+		<Program_Release_Status>New Release</Program_Release_Status>
+		<Program_Install_Support>No Install Support</Program_Install_Support>
+		<Program_OS_Support>WinOther,Win7 x32,Win7 x64,Win8,Win8 x64,Win10,Mac OS X,Linux,WinMobile</Program_OS_Support>
+		<Program_Language>English,French,Hebrew</Program_Language>
+		<Program_Change_Info>Initial release.</Program_Change_Info>
+		<Program_Specific_Category>Internet</Program_Specific_Category>
+		<Program_Category_Class>Business::Scheduling &amp; Calendars</Program_Category_Class>
+		<Program_System_Requirements>Any modern web browser (Chrome, Firefox, Safari, Edge). No installation required.</Program_System_Requirements>
+		<File_Info>
+			<File_Size_Bytes>0</File_Size_Bytes>
+			<File_Size_K>0</File_Size_K>
+			<File_Size_MB>0.00</File_Size_MB>
+		</File_Info>
+		<Expire_Info>
+			<Has_Expire_Info>N</Has_Expire_Info>
+			<Expire_Count>0</Expire_Count>
+			<Expire_Based_On>Days</Expire_Based_On>
+			<Expire_Other_Info></Expire_Other_Info>
+			<Expire_Month></Expire_Month>
+			<Expire_Day></Expire_Day>
+			<Expire_Year></Expire_Year>
+		</Expire_Info>
+	</Program_Info>
+	<Program_Descriptions>
+		<English>
+			<Keywords>meeting scheduler group availability when2meet alternative calendar event planning availability poll free scheduling tool team scheduling</Keywords>
+			<Char_Desc_45>Free group meeting and availability scheduler</Char_Desc_45>
+			<Char_Desc_80>WhenFree helps groups find the best meeting time - free, no login required.</Char_Desc_80>
+			<Char_Desc_250>WhenFree is a free, real-time group scheduling tool (a when2meet alternative). Participants mark their availability on a shared grid, and WhenFree ranks the best overlapping times automatically. No account or login is required - just share a link.</Char_Desc_250>
+			<Char_Desc_450>WhenFree is a free, real-time group scheduling tool (a when2meet alternative). Participants mark their availability on a shared grid and WhenFree ranks the best overlapping times automatically. No account is required - just share a link. Extras: per-participant colors, dark/light themes, Google Calendar and .ics export, and English, Hebrew and French support with right-to-left layout for Hebrew.</Char_Desc_450>
+			<Char_Desc_2000>WhenFree is a free, no-login group meeting scheduler - a when2meet-style alternative for finding a time that works for everyone. The event creator shares a link, and each participant marks the times they're available on a shared grid. Availability syncs in real time across all participants via a live backend, so everyone sees updates instantly without refreshing.
+
+WhenFree automatically ranks time slots by how many people are available, so the best overlapping times surface at a glance. Each participant is assigned a distinct color for easy identification on the grid. Once a time is chosen, organizers can add it directly to Google Calendar or download a standard .ics file compatible with Apple Calendar and Outlook.
+
+The app supports both light and dark themes with persistent preference, and is fully localized in English, Hebrew (with right-to-left layout) and French. No sign-up, no app to install, and no cost - just open the link in any modern browser and start scheduling.</Char_Desc_2000>
+		</English>
+	</Program_Descriptions>
+	<Web_Info>
+		<Application_URLs>
+			<Application_Info_URL>https://whenfree.org</Application_Info_URL>
+			<Application_Order_URL></Application_Order_URL>
+			<Application_Screenshot_URL>https://whenfree.org/Screenshots/0.png</Application_Screenshot_URL>
+			<Application_Icon_URL>https://whenfree.org/icons/icon-256.png</Application_Icon_URL>
+			<Application_XML_File_URL>https://whenfree.org/pad.xml</Application_XML_File_URL>
+		</Application_URLs>
+		<Download_URLs>
+			<Primary_Download_URL>https://whenfree.org</Primary_Download_URL>
+			<Secondary_Download_URL></Secondary_Download_URL>
+			<Additional_Download_URL_1></Additional_Download_URL_1>
+			<Additional_Download_URL_2></Additional_Download_URL_2>
+		</Download_URLs>
+	</Web_Info>
+	<Permissions>
+		<Distribution_Permissions>This PAD file may be freely used, linked to, and redistributed by software directories and webmasters. WhenFree is a hosted web application with no downloadable installer to redistribute.</Distribution_Permissions>
+		<EULA>WhenFree is provided free of charge and as-is by Avi Klayman / WhenFree. Full Terms of Use and Privacy Policy are published at https://whenfree.org/terms.html</EULA>
+	</Permissions>
+</XML_DIZ_INFO>
