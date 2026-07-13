@@ -83,7 +83,7 @@ The app supports both light and dark themes with persistent preference, and is f
 		<Application_URLs>
 			<Application_Info_URL>https://whenfree.org</Application_Info_URL>
 			<Application_Order_URL></Application_Order_URL>
-			<Application_Screenshot_URL>https://whenfree.org/Screenshots/0.png</Application_Screenshot_URL>
+			<Application_Screenshot_URL>https://whenfree.org/Screenshots/1.png</Application_Screenshot_URL>
 			<Application_Icon_URL>https://whenfree.org/icons/icon-256.png</Application_Icon_URL>
 			<Application_XML_File_URL>https://whenfree.org/pad.xml</Application_XML_File_URL>
 		</Application_URLs>
