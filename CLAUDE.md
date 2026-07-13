@@ -34,6 +34,8 @@ git push
 | `terms.html` | Terms & Privacy page |
 | `accessibility-statement.html` | Accessibility statement |
 | `404.html` | GitHub Pages custom 404 |
+| `pad.xml` | ASP PAD 4.0 descriptor for software directory submissions (Softpedia, etc.) — self-hosted at `whenfree.org/pad.xml` |
+| `Screenshots/` | Listing screenshots: `0.png` (creation form), `1.png` (grid + best times — used as PAD hero image), `2.png` (mobile crop) |
 
 ## Domain & Redirects
 
@@ -42,6 +44,14 @@ git push
 - **Email forwarding (incoming):** Cloudflare Email Routing catch-all → `avi.klayman@gmail.com`
 - **Email sending (outgoing):** ZeptoMail transactional API from `no-reply@whenfree.org` (via GAS `mailer.gs`)
 - **Contact:** `avi@whenfree.org`
+
+## Software Directory Listings (PAD)
+
+- `pad.xml` — ASP PAD 4.0 descriptor for submitting WhenFree to Softpedia and similar software directories. Self-hosted at `https://whenfree.org/pad.xml` (its own `Application_XML_File_URL` points back to itself, per PAD convention). Submit by pasting that URL into a directory's PAD/submit-software form.
+- **Legal/company info used:** `Company_Name`=`Klayman Meteor Ltd.`, address `5 Snir St., Ramat-Hasharon, Israel 4704071`, contact `avi@whenfree.org` — reuse this if other directories need company info.
+- **Web-app caveat:** PAD was designed for downloadable installers; WhenFree has none, so `File_Info` sizes are `0` and `Primary_Download_URL` points at the homepage itself rather than an installer file. `Program_OS_Support` lists broad desktop/mobile OSes as an approximation since the spec has no literal "Web" value.
+- **Hero screenshot:** `Screenshots/1.png` (grid + ranked best times) is used as `Application_Screenshot_URL` — most representative of the product's value prop.
+- To update: edit `pad.xml`, commit, push — live within ~a minute via GitHub Pages.
 
 ## Features
 
