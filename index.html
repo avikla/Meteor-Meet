@@ -148,6 +148,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflo
 }
 .tagline em{color:var(--accent);font-style:italic;font-size:1em}
 [dir="rtl"] .tagline em{font-style:normal}
+.tagline-sub{
+  font-size:13px;font-weight:400;
+  color:var(--muted2);margin-top:4px;
+}
 
 .create-form{
   flex:1;overflow-y:auto;overflow-x:hidden;
@@ -807,6 +811,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflo
   .site-header{padding:64px 0 4px}
   .logo{font-size:26px}
   .tagline{font-size:13px}
+  .tagline-sub{font-size:12px}
   .card{padding:12px}
   .create-form{gap:8px}
   .create-actions{padding-bottom:4px}
@@ -1333,6 +1338,7 @@ body.a11y-adhd .a11y-panel{opacity:1 !important;pointer-events:auto !important}
   <header class="site-header">
     <div class="logo"><span data-i18n="appName">Meet Scheduler</span><span class="logo-mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="30" height="30" style="display:block"><rect x="5" y="8.5" width="22" height="17" rx="3" fill="currentColor" fill-opacity="0.15" stroke="currentColor" stroke-width="1.4" stroke-opacity="0.5"/><rect x="5" y="8.5" width="22" height="5.5" rx="3" fill="currentColor" fill-opacity="0.22"/><rect x="5" y="11.5" width="22" height="2.5" fill="currentColor" fill-opacity="0.22"/><rect x="10.5" y="5.5" width="2" height="5" rx="1" fill="currentColor"/><rect x="19.5" y="5.5" width="2" height="5" rx="1" fill="currentColor"/><path d="M10.5 18.5 L14.5 22.5 L21.5 14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></span></div>
     <p class="tagline" data-i18n-html="tagline">Find the time. Finally.</p>
+    <p class="tagline-sub" data-i18n="taglineSub">No sign-up. No app. Free.</p>
   </header>
 
   <main class="create-form">
@@ -1665,6 +1671,7 @@ const LANGS = {
     appName:'WhenFree',
     pageTitle:'WhenFree — Find the time. Finally.',
     tagline:'Find the time. Finally.',
+    taglineSub:'No sign-up. No app. Free.',
     step1:'Name your event', namePlaceholder:'Team lunch, Project kickoff…',
     step2:'Pick dates', modeSpecific:'Specific Dates', modeDays:'Days of Week',
     prevMonth:'Previous month', nextMonth:'Next month',
@@ -1751,6 +1758,7 @@ const LANGS = {
     appName:'מתאם הפגישות',
     pageTitle:'מטאור — מוצאים זמן.',
     tagline:'מוצאים זמן.',
+    taglineSub:'בלי הרשמה. בלי אפליקציה. בחינם.',
     step1:'שם האירוע', namePlaceholder:'פגישת צוות, דיון…',
     step2:'בחירת תאריכים', modeSpecific:'תאריכים ספציפיים', modeDays:'ימי השבוע',
     prevMonth:'חודש קודם', nextMonth:'חודש הבא',
@@ -1837,6 +1845,7 @@ const LANGS = {
     appName:'WhenFree',
     pageTitle:'WhenFree — Trouvez le bon moment.',
     tagline:'Trouvez le bon moment.',
+    taglineSub:'Sans inscription. Sans application. Gratuit.',
     step1:'Nommez votre événement', namePlaceholder:'Déjeuner d\'équipe, Lancement de projet…',
     step2:'Choisir les dates', modeSpecific:'Dates précises', modeDays:'Jours de la semaine',
     prevMonth:'Mois précédent', nextMonth:'Mois suivant',
