@@ -10,32 +10,16 @@
     gtag('config', 'G-F96GRW2MG9');
   </script>
   <script>
-    // Detect language from path (/en, /fr, /he) and load index.html
-    // while preserving the original URL
+    // Redirect /en, /fr, /he (and any other unmatched path) to a real
+    // index.html load via ?lang=, preserving query string and hash (event links).
+    // Scripts inserted via DOMParser + replaceWith never execute (per HTML spec),
+    // so the previous fetch-and-swap approach left the page completely inert.
     const path = window.location.pathname;
     const match = path.match(/^\/(en|fr|he)(?:\/|$)/);
-
-    if (match) {
-      const lang = match[1];
-      localStorage.setItem('lang', lang);
-    }
-
-    // Load index.html content and inject it into the page
-    // The URL stays the same (e.g., /en, /fr, /he) in the address bar
-    fetch('/index.html')
-      .then(response => response.text())
-      .then(html => {
-        // Parse the fetched HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-
-        // Replace current document with fetched content
-        document.documentElement.replaceWith(doc.documentElement);
-      })
-      .catch(() => {
-        // Fallback if fetch fails
-        window.location = '/';
-      });
+    const params = new URLSearchParams(window.location.search);
+    if (match) params.set('lang', match[1]);
+    const qs = params.toString();
+    window.location.replace('/' + (qs ? '?' + qs : '') + window.location.hash);
   </script>
 </head>
 <body>Loading...</body>
