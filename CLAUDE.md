@@ -57,7 +57,7 @@ git push
 
 - **Real-time sync:** Firestore backend syncs availability across all participants
 - **Ranked best times:** Algorithm ranks time slots by number of "available" votes
-- **Add to Calendar:** Google Calendar deep-link or `.ics` download (Apple/Outlook). Handles `specific` and `days` modes.
+- **Add to Calendar:** Google Calendar deep-link, Outlook web deep-link (`outlook.live.com/.../compose?rru=addevent`), or `.ics` download (Apple + other apps). Handles `specific` and `days` modes. All three paths use UTC times computed by `wallTimeToUtc()` — the `.ics` emits `DTSTART:...Z` (no `TZID`; Outlook desktop rejects/shifts undefined TZIDs), and the Google URL uses `dates=...Z/...Z` (no `ctz`). Do not reintroduce `TZID` lines or local-time Google dates — the wall-clock path had a midnight bug (slot ending 24:00 produced end-before-start).
 - **Per-user colors:** Each participant gets a color for easy identification
 - **Dark/light toggle:** Theme switcher with localStorage persistence
 - **i18n:** English, Hebrew (RTL), French — toggled via buttons or `?lang=` URL param
@@ -85,8 +85,9 @@ git push
 | `renderBestTimes()` | Scores and ranks time slots; populates `S.bestSlots` |
 | `syncActionStates()` | Disables/enables sidebar buttons based on data state |
 | `openCalModal(i)` | Opens "Add to Calendar" modal for `S.bestSlots[i]` |
-| `buildCalDate(slot)` | Converts slot data to `YYYYMMDD`/`HHMMSS` strings for calendar URLs |
-| `downloadIcs(slot, ...)` | Generates RFC 5545 `.ics` blob and triggers download |
+| `wallTimeToUtc(y, m, d, mins, tz)` | Converts wall-clock time in an IANA timezone to a UTC `Date` via `Intl.DateTimeFormat` (2-pass correction for DST edges; `hourCycle:'h23'` — `hour12:false` can render midnight as "24"). `mins >= 1440` rolls to next day. |
+| `buildCalDate(slot)` | Converts slot data to local `YYYYMMDD`/`HHMMSS` strings plus UTC forms: `startUtc`/`endUtc` (ICS `YYYYMMDDTHHMMSSZ`) and `startIso`/`endIso` (for the Outlook URL) |
+| `downloadIcs(slot, startUtc, endUtc)` | Generates RFC 5545 `.ics` blob (UTC `DTSTART`/`DTEND`) and triggers download |
 | `buildEmailTemplate(bodyHtml, dir)` | Wraps email content in branded HTML template |
 | `buildBestTimesEmailHtml()` | Builds localized best-times email (uses `currentLang`) |
 | `scheduleNotifyOrganizer(name)` | Debounced (120s) notification to creator when a participant marks cells — only fires on cell marks, not on join |
