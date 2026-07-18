@@ -516,6 +516,30 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflo
   color:var(--muted);letter-spacing:0.02em;
   flex-shrink:0;text-align:center;
 }
+.creator-nudge{
+  display:flex;align-items:center;gap:10px;flex-shrink:0;
+  background:var(--primary-ctr);color:var(--on-primary-ctr);
+  border-inline-start:4px solid var(--accent);
+  border-radius:var(--r-sm);padding:10px 14px;
+  font-family:var(--font-display);font-size:0.95rem;font-weight:600;line-height:1.4;
+  max-height:120px;overflow:hidden;
+  transition:opacity 0.3s ease,transform 0.3s ease,max-height 0.35s ease,margin 0.35s ease,padding 0.35s ease;
+}
+.creator-nudge[hidden]{display:none}
+.creator-nudge.nudge-out{opacity:0;transform:translateY(-6px);max-height:0;margin-bottom:-16px;padding-top:0;padding-bottom:0}
+.creator-nudge .nudge-icon{display:flex;align-items:center;flex-shrink:0;color:var(--accent)}
+@media (prefers-reduced-motion: no-preference){
+  .creator-nudge:not(.nudge-out){animation:nudge-pulse 2s ease-in-out infinite}
+  .creator-nudge:not(.nudge-out) .nudge-icon{animation:nudge-bounce 1.2s ease-in-out infinite}
+}
+@keyframes nudge-pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(0,194,129,0.25)}
+  50%{box-shadow:0 0 0 6px rgba(0,194,129,0)}
+}
+@keyframes nudge-bounce{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(3px)}
+}
 .heat-legend{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:500;color:var(--muted2);flex-wrap:wrap;justify-content:center}
 .legend-label{display:flex;align-items:center;white-space:nowrap}
 .legend-swatch{width:18px;height:13px;border-radius:4px;border:1px solid var(--border);flex-shrink:0}
@@ -791,6 +815,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflo
   .bt-cards{flex-direction:column;overflow-x:visible}
   .bt-card{max-width:100%;min-width:unset;width:100%}
   .grid-top-row{flex-direction:column;align-items:flex-start;gap:6px}
+  .creator-nudge{font-size:0.85rem;padding:9px 12px}
   .heat-legend{align-self:stretch;justify-content:center;flex-wrap:nowrap;gap:3px}
   .legend-swatch{width:14px;height:11px}
   .legend-label{font-size:10.5px}
@@ -1561,6 +1586,10 @@ body.a11y-adhd .a11y-panel{opacity:1 !important;pointer-events:auto !important}
         <button id="edit-title-btn" class="edit-title-btn" style="display:none" title="Edit meeting name" data-i18n-title="editTitle">&#9998;</button>
       </div>
     </div>
+    <div id="creator-nudge" class="creator-nudge" hidden>
+      <span class="nudge-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v14"/><path d="m6 12 6 6 6-6"/></svg></span>
+      <span class="nudge-text" data-i18n="creatorNudge">Step 1: click or drag the grid below to mark when YOU are free</span>
+    </div>
     <div class="grid-top-row">
       <div class="grid-hint" data-i18n="gridHint">Drag to mark your free times.</div>
       <div class="heat-legend">
@@ -1690,6 +1719,8 @@ const LANGS = {
     whatsappMsg:(name,url)=>`Join my meeting: *${name}*\n${url}`,
     sendEmail:`${_EMAIL} Email meeting link`, newEvent:`${_PLUS}<span class="nav-label">New meeting</span>`, editTitle:'Edit meeting name',
     gridHint:'Click or drag to mark your free times.', gridHintMobile:'Tap to mark your free times.',
+    creatorNudge:'Step 1: click or drag the grid below to mark when YOU are free',
+    creatorNudgeMobile:'Step 1: tap the grid below to mark when YOU are free',
     bestTimes:'Best times',
     legendFewerFree:'Fewer free', legendEveryone:'Everyone',
     onboardTitle:'How it works', onboardIntro:'The app helps participants find the best time to meet — no accounts, no 47-message email threads, no "does Tuesday work for anyone?" Just a link. Just answers.',
@@ -1777,6 +1808,8 @@ const LANGS = {
     whatsappMsg:(name,url)=>`הצטרפו לפגישה: *${name}*\n${url}`,
     sendEmail:`${_EMAIL} שלח קישור למייל`, newEvent:`${_PLUS}<span class="nav-label">פגישה חדשה</span>`, editTitle:'עריכת שם הפגישה',
     gridHint:'לחץ או גרור כדי לסמן זמינות.', gridHintMobile:'לחץ כדי לסמן זמינות.',
+    creatorNudge:'שלב 1: לחץ או גרור על הרשת למטה כדי לסמן מתי אתה פנוי',
+    creatorNudgeMobile:'שלב 1: הקש על הרשת למטה כדי לסמן מתי אתה פנוי',
     bestTimes:'זמנים מומלצים',
     legendFewerFree:'פחות פנויים', legendEveryone:'כולם',
     onboardTitle:'איך זה עובד', onboardIntro:'האפליקציה עוזרת לאנשים למצוא זמן לפגישה — בלי הרשמה, בלי 47 הודעות אימייל, בלי "מישהו פנוי ביום שלישי?" רק קישור. רק תשובות.',
@@ -1864,6 +1897,8 @@ const LANGS = {
     whatsappMsg:(name,url)=>`Rejoignez ma réunion : *${name}*\n${url}`,
     sendEmail:`${_EMAIL} Lien par e-mail`, newEvent:`${_PLUS}<span class="nav-label">Nouvelle réunion</span>`, editTitle:'Modifier le nom de la réunion',
     gridHint:'Cliquez ou faites glisser pour indiquer vos disponibilités.', gridHintMobile:'Appuyez pour indiquer vos disponibilités.',
+    creatorNudge:'Étape 1 : cliquez ou faites glisser sur la grille ci-dessous pour indiquer quand VOUS êtes libre',
+    creatorNudgeMobile:'Étape 1 : touchez la grille ci-dessous pour indiquer quand VOUS êtes libre',
     bestTimes:'Meilleurs créneaux',
     legendFewerFree:'Moins libres', legendEveryone:'Tous',
     onboardTitle:'Comment ça marche', onboardIntro:'L\'app aide les gens à trouver le bon moment — sans inscription, sans 47 emails, sans "quelqu\'un est libre mardi ?" Juste un lien. Juste des réponses.',
@@ -1977,6 +2012,8 @@ function applyLang() {
     if (ms && lang.markSubMobile) ms.textContent = lang.markSubMobile;
     const gh = document.querySelector('[data-i18n="gridHint"]');
     if (gh && lang.gridHintMobile) gh.textContent = lang.gridHintMobile;
+    const cn = document.querySelector('[data-i18n="creatorNudge"]');
+    if (cn && lang.creatorNudgeMobile) cn.textContent = lang.creatorNudgeMobile;
     if (sb && lang.copyLinkMobile) sb.innerHTML = lang.copyLinkMobile;
     if (wb && lang.whatsappLinkMobile) wb.innerHTML = lang.whatsappLinkMobile;
     if (eb && lang.sendEmailMobile) eb.innerHTML = lang.sendEmailMobile;
@@ -2765,6 +2802,28 @@ function syncActionStates() {
 
   const clearBtn = document.querySelector('.clear-inline-btn');
   if (clearBtn) clearBtn.disabled = !hasMyTimes;
+
+  syncCreatorNudge();
+}
+
+let creatorNudgeShown = null;
+function syncCreatorNudge() {
+  const el = document.getElementById('creator-nudge');
+  if (!el) return;
+  const show = !!(S.isCreator && S.currentUser &&
+                  S.currentUser.availability && S.currentUser.availability.size === 0);
+  if (show === creatorNudgeShown) return;
+  creatorNudgeShown = show;
+  if (show) {
+    el.hidden = false;
+    void el.offsetHeight; // reflow so a reappearance animates instead of snapping
+    el.classList.remove('nudge-out');
+  } else if (!el.hidden) {
+    el.classList.add('nudge-out');
+    const done = () => { if (!creatorNudgeShown) el.hidden = true; };
+    el.addEventListener('transitionend', done, { once: true });
+    setTimeout(done, 450);
+  }
 }
 
 function renderBestTimes() {
