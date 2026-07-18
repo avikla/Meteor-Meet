@@ -1345,6 +1345,10 @@ body.a11y-adhd .a11y-panel{opacity:1 !important;pointer-events:auto !important}
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h5v5H7z"/></svg>
         <span data-i18n="addToGoogleCal">Add to Google Cal</span>
       </button>
+      <button id="cal-outlook-btn" class="cal-action-btn cal-action-btn--secondary">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg>
+        <span data-i18n="addToOutlookCal">Add to Outlook</span>
+      </button>
       <button id="cal-ics-btn" class="cal-action-btn cal-action-btn--secondary">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <span data-i18n="addToAppleCal">Add to Apple Cal</span>
@@ -1721,6 +1725,7 @@ const LANGS = {
     gridHint:'Click or drag to mark your free times.', gridHintMobile:'Tap to mark your free times.',
     creatorNudge:'Step 1: click or drag the grid below to mark when YOU are free',
     creatorNudgeMobile:'Step 1: tap the grid below to mark when YOU are free',
+    creatorNudgeShare:'Step 2: share the link so others can add their times',
     bestTimes:'Best times',
     legendFewerFree:'Fewer free', legendEveryone:'Everyone',
     onboardTitle:'How it works', onboardIntro:'The app helps participants find the best time to meet — no accounts, no 47-message email threads, no "does Tuesday work for anyone?" Just a link. Just answers.',
@@ -1782,8 +1787,9 @@ const LANGS = {
     daysShort:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
     daysFull:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
     addToCalendar:'Add to Calendar',
-    calModalDesc:'Add the event to your Google Calendar or download the .ics for your local calendar app.',
+    calModalDesc:'Add the event to Google Calendar or Outlook, or download the .ics for your local calendar app.',
     addToGoogleCal:'Add to Google Cal',
+    addToOutlookCal:'Add to Outlook',
     addToAppleCal:'Add to Apple Cal',
     dir:'ltr', locale:'en-US', ampm:false,
   },
@@ -1810,6 +1816,7 @@ const LANGS = {
     gridHint:'לחץ או גרור כדי לסמן זמינות.', gridHintMobile:'לחץ כדי לסמן זמינות.',
     creatorNudge:'שלב 1: לחץ או גרור על הרשת למטה כדי לסמן מתי אתה פנוי',
     creatorNudgeMobile:'שלב 1: הקש על הרשת למטה כדי לסמן מתי אתה פנוי',
+    creatorNudgeShare:'שלב 2: שתף את הקישור כדי שאחרים יוסיפו את הזמינות שלהם',
     bestTimes:'זמנים מומלצים',
     legendFewerFree:'פחות פנויים', legendEveryone:'כולם',
     onboardTitle:'איך זה עובד', onboardIntro:'האפליקציה עוזרת לאנשים למצוא זמן לפגישה — בלי הרשמה, בלי 47 הודעות אימייל, בלי "מישהו פנוי ביום שלישי?" רק קישור. רק תשובות.',
@@ -1871,8 +1878,9 @@ const LANGS = {
     daysShort:['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'],
     daysFull:['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'],
     addToCalendar:'הוסף ליומן',
-    calModalDesc:'הוסף את האירוע ל-Google Calendar או הורד .ics לאפליקציית היומן שלך.',
+    calModalDesc:'הוסף את האירוע ל-Google Calendar או ל-Outlook, או הורד .ics לאפליקציית היומן שלך.',
     addToGoogleCal:'הוסף ל-Google Cal',
+    addToOutlookCal:'הוסף ל-Outlook',
     addToAppleCal:'הוסף ל-Apple Cal',
     dir:'rtl', locale:'he-IL', ampm:false,
   },
@@ -1899,6 +1907,7 @@ const LANGS = {
     gridHint:'Cliquez ou faites glisser pour indiquer vos disponibilités.', gridHintMobile:'Appuyez pour indiquer vos disponibilités.',
     creatorNudge:'Étape 1 : cliquez ou faites glisser sur la grille ci-dessous pour indiquer quand VOUS êtes libre',
     creatorNudgeMobile:'Étape 1 : touchez la grille ci-dessous pour indiquer quand VOUS êtes libre',
+    creatorNudgeShare:'Étape 2 : partagez le lien pour que les autres ajoutent leurs disponibilités',
     bestTimes:'Meilleurs créneaux',
     legendFewerFree:'Moins libres', legendEveryone:'Tous',
     onboardTitle:'Comment ça marche', onboardIntro:'L\'app aide les gens à trouver le bon moment — sans inscription, sans 47 emails, sans "quelqu\'un est libre mardi ?" Juste un lien. Juste des réponses.',
@@ -1960,8 +1969,9 @@ const LANGS = {
     daysShort:['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'],
     daysFull:['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],
     addToCalendar:'Ajouter au calendrier',
-    calModalDesc:'Ajoutez l\'événement à Google Agenda ou téléchargez le fichier .ics pour votre application calendrier locale.',
+    calModalDesc:'Ajoutez l\'événement à Google Agenda ou Outlook, ou téléchargez le fichier .ics pour votre application calendrier locale.',
     addToGoogleCal:'Ajouter à Google Agenda',
+    addToOutlookCal:'Ajouter à Outlook',
     addToAppleCal:'Ajouter à Apple Calendar',
     dir:'ltr', locale:'fr-FR', ampm:false,
   }
@@ -2806,24 +2816,45 @@ function syncActionStates() {
   syncCreatorNudge();
 }
 
-let creatorNudgeShown = null;
+let creatorNudgeState = null; // null | 'mark' | 'share' | 'off'
+const NUDGE_ICON_MARK  = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v14"/><path d="m6 12 6 6 6-6"/></svg>';
+const NUDGE_ICON_SHARE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v13"/><path d="m7 7 5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>';
+function creatorHasShared() {
+  try { return localStorage.getItem('wf-shared-' + S.eventSlug) === '1'; } catch { return false; }
+}
+function markCreatorShared() {
+  try { localStorage.setItem('wf-shared-' + S.eventSlug, '1'); } catch {}
+  syncCreatorNudge();
+}
 function syncCreatorNudge() {
   const el = document.getElementById('creator-nudge');
   if (!el) return;
-  const show = !!(S.isCreator && S.currentUser &&
-                  S.currentUser.availability && S.currentUser.availability.size === 0);
-  if (show === creatorNudgeShown) return;
-  creatorNudgeShown = show;
-  if (show) {
-    el.hidden = false;
-    void el.offsetHeight; // reflow so a reappearance animates instead of snapping
-    el.classList.remove('nudge-out');
-  } else if (!el.hidden) {
-    el.classList.add('nudge-out');
-    const done = () => { if (!creatorNudgeShown) el.hidden = true; };
-    el.addEventListener('transitionend', done, { once: true });
-    setTimeout(done, 450);
+  let state = 'off';
+  if (S.isCreator && S.currentUser && S.currentUser.availability) {
+    if (S.currentUser.availability.size === 0) state = 'mark';
+    // others having joined proves the link was already shared
+    else if (!creatorHasShared() && !(S.participants || []).length) state = 'share';
+  }  if (state === creatorNudgeState) return;
+  creatorNudgeState = state;
+  if (state === 'off') {
+    if (!el.hidden) {
+      el.classList.add('nudge-out');
+      const done = () => { if (creatorNudgeState === 'off') el.hidden = true; };
+      el.addEventListener('transitionend', done, { once: true });
+      setTimeout(done, 450);
+    }
+    return;
   }
+  const lang = t();
+  const key = state === 'mark' ? 'creatorNudge' : 'creatorNudgeShare';
+  const txt = el.querySelector('.nudge-text');
+  txt.dataset.i18n = key;
+  txt.textContent = (state === 'mark' && navigator.maxTouchPoints > 0 && lang.creatorNudgeMobile)
+    ? lang.creatorNudgeMobile : lang[key];
+  el.querySelector('.nudge-icon').innerHTML = state === 'mark' ? NUDGE_ICON_MARK : NUDGE_ICON_SHARE;
+  el.hidden = false;
+  void el.offsetHeight; // reflow so a reappearance animates instead of snapping
+  el.classList.remove('nudge-out');
 }
 
 function renderBestTimes() {
@@ -3454,6 +3485,25 @@ function initScreenA() {
 // ══════════════════════════════════════
 // CALENDAR MODAL
 // ══════════════════════════════════════
+function wallTimeToUtc(year, month, day, mins, tz) {
+  // Convert wall-clock time in an IANA timezone to a UTC Date.
+  // Guess UTC = wall time, then correct by however far tz-rendered
+  // wall time lands from the target (twice, for DST transition edges).
+  const target = Date.UTC(year, month - 1, day, 0, mins);
+  let ts = target;
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+  });
+  for (let i = 0; i < 2; i++) {
+    const p = {};
+    fmt.formatToParts(new Date(ts)).forEach(x => { p[x.type] = x.value; });
+    const wall = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second);
+    ts += target - wall;
+  }
+  return new Date(ts);
+}
+
 function buildCalDate(slot) {
   let year, month, day;
   if (slot.mode === 'specific') {
@@ -3470,32 +3520,44 @@ function buildCalDate(slot) {
   const pad = n => String(n).padStart(2,'0');
   const startH = Math.floor(slot.startMins / 60), startM = slot.startMins % 60;
   const endH   = Math.floor(slot.endMins   / 60) % 24, endM = slot.endMins % 60;
+  const toIcs = d => d.toISOString().replace(/[-:]/g,'').slice(0,15) + 'Z';
+  const toIso = d => d.toISOString().slice(0,19) + 'Z';
+  const startD = wallTimeToUtc(year, month, day, slot.startMins, slot.timezone);
+  const endD   = wallTimeToUtc(year, month, day, slot.endMins,   slot.timezone);
   return {
     dateStr:  `${year}${pad(month)}${pad(day)}`,
     startStr: `${pad(startH)}${pad(startM)}00`,
     endStr:   `${pad(endH)}${pad(endM)}00`,
+    startUtc: toIcs(startD), endUtc: toIcs(endD),
+    startIso: toIso(startD), endIso: toIso(endD),
   };
 }
 
 function openCalModal(slotIndex) {
   const slot = S.bestSlots[slotIndex];
   if (!slot) return;
-  const { dateStr, startStr, endStr } = buildCalDate(slot);
+  const { startUtc, endUtc, startIso, endIso } = buildCalDate(slot);
   const gcal = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
     `&text=${encodeURIComponent(S.eventName)}` +
-    `&dates=${dateStr}T${startStr}/${dateStr}T${endStr}` +
+    `&dates=${startUtc}/${endUtc}` +
     `&details=${encodeURIComponent(window.location.href)}` +
-    `&location=${encodeURIComponent(window.location.href)}` +
-    `&ctz=${encodeURIComponent(slot.timezone)}`;
+    `&location=${encodeURIComponent(window.location.href)}`;
+  const outlook = `https://outlook.live.com/calendar/0/action/compose?rru=addevent` +
+    `&subject=${encodeURIComponent(S.eventName)}` +
+    `&startdt=${startIso}&enddt=${endIso}` +
+    `&body=${encodeURIComponent(window.location.href)}` +
+    `&location=${encodeURIComponent(window.location.href)}`;
 
   document.getElementById('cal-event-name').textContent = S.eventName;
   document.getElementById('cal-event-time').textContent = `${slot.dateLabel} · ${slot.timeLabel}`;
   document.getElementById('cal-desc').textContent = t().calModalDesc;
-  document.querySelector('#cal-google-btn span').textContent = t().addToGoogleCal;
-  document.querySelector('#cal-ics-btn span').textContent   = t().addToAppleCal;
+  document.querySelector('#cal-google-btn span').textContent  = t().addToGoogleCal;
+  document.querySelector('#cal-outlook-btn span').textContent = t().addToOutlookCal;
+  document.querySelector('#cal-ics-btn span').textContent     = t().addToAppleCal;
 
-  document.getElementById('cal-google-btn').onclick = () => window.open(gcal, '_blank', 'noopener');
-  document.getElementById('cal-ics-btn').onclick    = () => downloadIcs(slot, dateStr, startStr, endStr);
+  document.getElementById('cal-google-btn').onclick  = () => window.open(gcal, '_blank', 'noopener');
+  document.getElementById('cal-outlook-btn').onclick = () => window.open(outlook, '_blank', 'noopener');
+  document.getElementById('cal-ics-btn').onclick     = () => downloadIcs(slot, startUtc, endUtc);
 
   const overlay = document.getElementById('cal-overlay');
   overlay.style.display = 'flex';
@@ -3508,7 +3570,7 @@ function closeCalModal() {
   setTimeout(() => { overlay.style.display = 'none'; }, 300);
 }
 
-function downloadIcs(slot, dateStr, startStr, endStr) {
+function downloadIcs(slot, startUtc, endUtc) {
   const now = new Date().toISOString().replace(/[-:.]/g,'').slice(0,15) + 'Z';
   const uid = `${S.eventSlug}-${Date.now()}@whenfree.org`;
   const ics = [
@@ -3520,8 +3582,8 @@ function downloadIcs(slot, dateStr, startStr, endStr) {
     'BEGIN:VEVENT',
     `UID:${uid}`,
     `DTSTAMP:${now}`,
-    `DTSTART;TZID=${slot.timezone}:${dateStr}T${startStr}`,
-    `DTEND;TZID=${slot.timezone}:${dateStr}T${endStr}`,
+    `DTSTART:${startUtc}`,
+    `DTEND:${endUtc}`,
     `SUMMARY:${S.eventName.replace(/[\\;,]/g, s => '\\' + s)}`,
     `URL:${window.location.href}`,
     `DESCRIPTION:${window.location.href}`,
@@ -3637,6 +3699,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     btn.innerHTML = t().copied;
     btn.disabled = true;
     setTimeout(() => { btn.innerHTML = original; btn.disabled = false; }, 2000);
+    markCreatorShared();
   });
   // ─── Contact history ───
   const WF_CONTACTS_KEY = 'wf_contacts';
@@ -3790,6 +3853,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('whatsapp-btn').addEventListener('click', () => {
     const msg = t().whatsappMsg(S.eventName || '', window.location.href);
     window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+    markCreatorShared();
   });
   document.getElementById('email-btn').addEventListener('click', () =>
     toggleEmailPanel('email-panel', 'email-btn', 'best-times-email-panel'));
@@ -3799,13 +3863,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   initEmailPanelInput('email-panel-input', 'email-suggestions', 'email-chips', 'email-contacts-btn');
   initEmailPanelInput('best-times-email-input', 'best-times-suggestions', 'best-times-chips', 'best-times-contacts-btn');
 
-  document.getElementById('email-panel-send').addEventListener('click', () =>
-    sendToAllChips(
+  document.getElementById('email-panel-send').addEventListener('click', () => {
+    markCreatorShared();
+    return sendToAllChips(
       { inputId:'email-panel-input', chipsId:'email-chips', statusId:'email-panel-status', sendBtnId:'email-panel-send' },
       addr => [t().emailSubject(S.eventName), t().emailBody(S.eventName, window.location.href),
                t().emailHtmlBody ? t().emailHtmlBody(S.eventName, window.location.href) : null,
                S.eventName, window.location.href]
-    ));
+    );
+  });
 
   document.getElementById('best-times-email-send').addEventListener('click', () =>
     sendToAllChips(
