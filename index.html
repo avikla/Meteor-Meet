@@ -619,6 +619,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflo
   display:flex;align-items:center;justify-content:center;
   color:#DC2626;font-size:20px;flex-shrink:0;
 }
+.confirm-icon.confirm-icon-accent{background:var(--primary-ctr);color:var(--on-primary-ctr)}
 .confirm-header{display:flex;align-items:center;gap:14px}
 .confirm-title{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--text);line-height:1.2}
 .confirm-body{font-family:var(--font-body);font-size:14px;color:var(--muted);line-height:1.55;margin:0}
@@ -638,6 +639,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflo
   transition:opacity 0.15s;
 }
 .confirm-ok-btn:hover{opacity:0.88}
+.confirm-ok-btn.confirm-ok-accent{background:var(--accent);color:var(--on-primary)}
 @media(max-width:640px){
   .confirm-panel{padding:24px 20px 20px}
   .confirm-actions{flex-direction:column-reverse}
@@ -1460,12 +1462,6 @@ body.a11y-adhd .a11y-panel{opacity:1 !important;pointer-events:auto !important}
         <button id="create-btn" class="create-btn" style="flex:1">Next &nbsp;&#8594;</button>
       </div>
       <p class="dev-footer">Avi Klayman &mdash; <a href="mailto:avi@whenfree.org">avi@whenfree.org</a><br><a href="help.html">Help</a> &middot; <a href="accessibility-statement.html">Accessibility</a> &middot; <a href="terms.html">Terms &amp; Privacy</a></p>
-      <div style="display:flex;justify-content:center;margin-top:10px">
-        <!-- Launchpadly — WhenFree (listed-on) -->
-        <a href="https://launchpadly.co/startup/whenfree?ref=badge" target="_blank" rel="noopener noreferrer" data-launchpadly-badge="whenfree" data-launchpadly-badge-variant="listed-on">
-          <img src="https://launchpadly.co/embed/badges/startup/whenfree.svg?variant=listed-on" alt="Launchpadly Startup Directory" width="260" height="48" style="display:block;border:0;" />
-        </a>
-      </div>
       <!-- Directory badges (LaunchBuff, CodeTrendy, MediaProNet, DealMyApp) — disabled, kept for easy re-add.
       <div style="display:flex;gap:10px;margin-top:10px;justify-content:center;align-items:center;flex-wrap:wrap">
         <a href="https://launchbuff.com" target="_blank" rel="noopener noreferrer" title="Featured on LaunchBuff">
@@ -1635,7 +1631,7 @@ body.a11y-adhd .a11y-panel{opacity:1 !important;pointer-events:auto !important}
 <div id="confirm-overlay" class="confirm-overlay" role="dialog" aria-modal="true">
   <div class="confirm-panel">
     <div class="confirm-header">
-      <div class="confirm-icon">✕</div>
+      <div class="confirm-icon" id="confirm-icon">✕</div>
       <div class="confirm-title" id="confirm-title"></div>
     </div>
     <p class="confirm-body" id="confirm-body"></p>
@@ -1745,6 +1741,8 @@ const LANGS = {
     youBadge:'you', clearBtn:`${_X} Clear my times`,
     removeParticipant:'Remove participant', removeConfirm:(name)=>`Remove "${name}" from this event?`,
     confirmRemove:'Remove', confirmCancel:'Cancel',
+    newEventConfirmTitle:'Start a new meeting?', newEventConfirmBody:'This meeting isn\'t deleted - it stays saved and everyone can still use its link. Make sure you\'ve copied or shared this link if you want to come back to it.',
+    newEventConfirmOk:'Start new meeting',
     sendBestTimes:'📊 Send best times',
     bestTimesSubject:(name)=>`Best times for ${name}`,
     bestTimesBody:(name,url)=>`Hi,\n\nHere are the best meeting times for: ${name}\n\n${url}\n\nThanks!`,
@@ -1836,6 +1834,8 @@ const LANGS = {
     youBadge:'את/ה', clearBtn:`נקה זמנים ${_X}`,
     removeParticipant:'הסר משתתף', removeConfirm:(name)=>`להסיר את "${name}" מהאירוע?`,
     confirmRemove:'הסר', confirmCancel:'ביטול',
+    newEventConfirmTitle:'להתחיל פגישה חדשה?', newEventConfirmBody:'הפגישה הנוכחית לא נמחקת - היא נשארת שמורה וכולם עדיין יכולים להשתמש בקישור שלה. ודא/י שהעתקת או שיתפת את הקישור אם תרצה/י לחזור אליה.',
+    newEventConfirmOk:'התחל/י פגישה חדשה',
     sendBestTimes:'📊 שלח זמנים מומלצים',
     bestTimesSubject:(name)=>`זמנים מומלצים עבור: ${name}`,
     bestTimesBody:(name,url)=>`שלום,\n\nהזמנים המומלצים לפגישה: ${name}\n\n${url}\n\nתודה!`,
@@ -1927,6 +1927,8 @@ const LANGS = {
     youBadge:'vous', clearBtn:`${_X} Effacer créneaux`,
     removeParticipant:'Retirer le participant', removeConfirm:(name)=>`Retirer "${name}" de cet événement ?`,
     confirmRemove:'Retirer', confirmCancel:'Annuler',
+    newEventConfirmTitle:'Démarrer une nouvelle réunion ?', newEventConfirmBody:'Cette réunion n\'est pas supprimée - elle reste enregistrée et son lien fonctionne toujours. Assurez-vous d\'avoir copié ou partagé ce lien si vous souhaitez y revenir.',
+    newEventConfirmOk:'Démarrer une nouvelle réunion',
     sendBestTimes:'📊 Meilleurs créneaux',
     bestTimesSubject:(name)=>`Meilleurs créneaux pour : ${name}`,
     bestTimesBody:(name,url)=>`Bonjour,\n\nVoici les meilleurs créneaux pour : ${name}\n\n${url}\n\nCordialement !`,
@@ -3314,12 +3316,15 @@ function escHtml(s) {
 }
 
 // ── Custom confirm dialog ─────────────────────────────────────────────────────
-function showConfirm({ title, body, okLabel, cancelLabel, onOk }) {
+function showConfirm({ title, body, okLabel, cancelLabel, onOk, variant }) {
   const overlay = document.getElementById('confirm-overlay');
   document.getElementById('confirm-title').textContent = title;
   document.getElementById('confirm-body').textContent = body || '';
   document.getElementById('confirm-ok-btn').textContent = okLabel;
   document.getElementById('confirm-cancel-btn').textContent = cancelLabel;
+  document.getElementById('confirm-icon').classList.toggle('confirm-icon-accent', variant === 'accent');
+  document.getElementById('confirm-icon').textContent = variant === 'accent' ? '+' : '✕';
+  document.getElementById('confirm-ok-btn').classList.toggle('confirm-ok-accent', variant === 'accent');
 
   const okBtn = document.getElementById('confirm-ok-btn');
   function close() {
@@ -3686,9 +3691,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
   document.getElementById('new-event-btn').addEventListener('click', () => {
-    if (unsubscribe) unsubscribe();
-    location.hash = '';
-    location.reload();
+    showConfirm({
+      title: t().newEventConfirmTitle,
+      body: t().newEventConfirmBody,
+      okLabel: t().newEventConfirmOk,
+      cancelLabel: t().confirmCancel,
+      variant: 'accent',
+      onOk: () => {
+        if (unsubscribe) unsubscribe();
+        location.hash = '';
+        location.reload();
+      },
+    });
   });
   document.getElementById('share-btn').addEventListener('click', async () => {
     try {
