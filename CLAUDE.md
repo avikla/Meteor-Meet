@@ -26,6 +26,7 @@ git push
 | `index.html` | Single-page app (HTML, CSS, JS inline) with Firebase Firestore integration |
 | `mailer.gs` | Google Apps Script — sends all emails via ZeptoMail API from `no-reply@whenfree.org` (display name "WhenFree"). Token stored in GAS Script Properties as `ZEPTO_API_KEY`. |
 | `daily-report.gs` | GAS — daily DB usage report to `avi@whenfree.org` at midnight IST |
+| `cleanup.gs` | GAS — private web-app admin page (`doGet`) to review and delete expired events. Separate deployment from the production mailer/report webapp; see GAS Deployment section. |
 | `appsscript.json` | GAS manifest — OAuth scopes, timezone (Asia/Jerusalem), runtime |
 | `icons/favicon.svg` | App favicon (calendar + checkmark icon) |
 | `icons/` | Icon set: `icon-16/32/64/128/256/512.svg`, `logo-wordmark.svg`, `logo-wordmark-light.svg` |
@@ -124,7 +125,7 @@ Each event document stores:
 - `createdAt` — Firestore server timestamp (added June 2026; older events lack this field)
 - `lastDate` — ISO date string of the latest date in `selectedDates` (e.g. `"2026-07-15"`); `null` for `days` mode events (recurring days of week have no end date)
 
-**Manual cleanup:** To delete expired events, filter Firestore Console → `events` → `lastDate` < today. `null` entries are days-of-week events — review separately. Do not suggest automating this unless the user asks.
+**Cleanup tool:** `cleanup.gs` provides a private admin web page to review candidates and delete them after typing a confirm phrase. It flags two buckets: (1) dated events where `lastDate` < today, (2) recurring (`days` mode, `lastDate == null`) events with no `createdAt` for 90+ days. Caveat: events created before June 2026 predate `createdAt` entirely, so old abandoned recurring events from before then won't surface automatically — review those manually in Firestore Console. Manual fallback (still valid): Firestore Console → `events` → filter `lastDate` < today.
 
 ## RTL / Layout Architecture
 
@@ -182,7 +183,8 @@ clasp push --force && clasp deploy --deploymentId AKfycbz7hknVlxm_K7RdFBV1gd7MbB
 ```
 
 - `@HEAD` deployment ID: `AKfycbwVGimKBjWg3PRYpkRLPFcW1vbdQV7KxpJepNOwcSzg` (dev/test only)
-- Production deployment ID: `AKfycbz7hknVlxm_K7RdFBV1gd7MbBz3KYsq7PQ2UgqHHByTxM2PI2W21T8p3sZ6qIenPMPDNg`
+- Production deployment ID: `AKfycbz7hknVlxm_K7RdFBV1gd7MbBz3KYsq7PQ2UgqHHByTxM2PI2W21T8p3sZ6qIenPMPDNg` — serves `mailer.gs`'s `doPost` (`ANYONE_ANONYMOUS`, called from public client JS). Never change its access level.
+- Admin cleanup deployment ID: `AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg` — serves `cleanup.gs`'s `doGet` privately (Execute as: Me, Access: Only myself). URL: `https://script.google.com/macros/s/AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg/exec?token=<ADMIN_TOKEN>` (token stored in Script Properties as `ADMIN_TOKEN`).
 
 ## GAS Daily Report
 

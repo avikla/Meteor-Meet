@@ -2,3 +2,6 @@
 **/*.md
 .gitignore
 .gitmodules
+.git/**
+functions/**
+**/node_modules/**

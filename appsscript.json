@@ -11,6 +11,7 @@
     "https://mail.google.com/",
     "https://www.googleapis.com/auth/monitoring.read",
     "https://www.googleapis.com/auth/script.scriptapp",
-    "https://www.googleapis.com/auth/script.external_request"
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/datastore"
   ]
 }
