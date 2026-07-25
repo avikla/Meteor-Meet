@@ -5,6 +5,8 @@ const REPORT_CONFIG = {
   collection: 'events',
   recipient:  'avi.klayman@gmail.com',
   tz:         'Asia/Jerusalem',
+  cleanupUrl: 'https://script.google.com/macros/s/AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg/exec' +
+              '?token=' + PropertiesService.getScriptProperties().getProperty('ADMIN_TOKEN'),
   limits: {
     reads:   50000,
     writes:  20000,
@@ -270,6 +272,23 @@ function buildEmailHtml_(data) {
                   '<div style="font-size:12px;color:#7E988F;margin-top:2px;">Reads, writes, and storage over time in Cloud Console</div></td>' +
               '<td align="right"><a href="https://console.cloud.google.com/firestore/databases/-default-/usage?project=meteor-meet" ' +
                 'style="background:#00C281;color:#04261B;font-size:12px;font-weight:700;padding:8px 16px;border-radius:100px;text-decoration:none;white-space:nowrap;">View &#8594;</a></td>' +
+            '</tr></table>' +
+          '</div>' +
+        '</td>' +
+      '</tr></table>' +
+
+      // Cleanup section
+      '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7E988F;margin-bottom:14px;margin-top:8px;">Maintenance</div>' +
+      '<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;"><tr>' +
+        '<td style="padding:6px;">' +
+          '<div style="background:#F4FAF7;border:1px solid #D6EDE4;border-radius:12px;padding:14px 18px;">' +
+            '<table width="100%" cellpadding="0" cellspacing="0"><tr>' +
+              '<td>' +
+                '<div style="font-size:12px;color:#3E5750;font-weight:500;">Expired meeting cleanup</div>' +
+                '<div style="font-size:12px;color:#7E988F;margin-top:2px;">Review and delete expired events from Firestore</div>' +
+              '</td>' +
+              '<td align="right"><a href="' + REPORT_CONFIG.cleanupUrl + '" ' +
+                'style="background:#00C281;color:#04261B;font-size:12px;font-weight:700;padding:8px 16px;border-radius:100px;text-decoration:none;white-space:nowrap;">Open &#8594;</a></td>' +
             '</tr></table>' +
           '</div>' +
         '</td>' +

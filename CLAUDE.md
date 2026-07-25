@@ -64,7 +64,7 @@ git push
 - **i18n:** English, Hebrew (RTL), French — toggled via buttons or `?lang=` URL param
 - **Language URL params:** `?lang=fr`, `?lang=he`, `?lang=en` — detected on load, updated in URL on change. Works with event hashes: `whenfree.org/?lang=fr#eventSlug`
 - **No login required:** Share a link, participants add their name and availability
-- **Daily DB report:** Automated midnight email with Firestore event count, reads/writes/deletes vs. free-tier limits, storage usage
+- **Daily DB report:** Automated midnight email with Firestore event count, reads/writes/deletes vs. free-tier limits, storage usage, and a direct link (with `ADMIN_TOKEN` embedded) to the expired-meeting cleanup page
 - **Smart disabled states:** `syncActionStates()` disables "Send best times" when no slots exist; re-enables reactively
 - **Floating email panels:** Email input panels use `position:fixed` (no layout shift when opened)
 - **Onboarding lang picker:** First-time visitors see EN/FR/HE buttons at the top of the help modal — clicking one calls `setLang()` and re-renders the modal content instantly in the chosen language before the user reads it

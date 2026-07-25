@@ -191,7 +191,7 @@ function candidateCardHtml_(c) {
     : '(no participants)';
 
   return '' +
-    '<label class="card">' +
+    '<label class="card" data-id="' + escHtml_(c.id) + '" data-bucket="' + c.bucket + '">' +
       '<input type="checkbox" class="pick" value="' + escHtml_(c.id) + '">' +
       '<div class="card-body">' +
         '<div class="card-title">' + escHtml_(c.name) + '</div>' +
@@ -222,49 +222,88 @@ function buildCleanupPageHtml_(candidates) {
     '.card-link{font-size:12px;color:#00382A;font-weight:600;text-decoration:none;display:inline-block;margin-top:6px;}' +
     '.empty{color:#7E988F;font-size:13px;}' +
     '.bar{position:sticky;top:0;background:#D6EDE4;padding:12px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}' +
-    'input[type=text]{padding:8px 10px;border-radius:8px;border:1px solid rgba(10,70,52,0.2);font-size:13px;}' +
     'button{padding:9px 18px;border-radius:100px;border:none;font-weight:700;font-size:13px;cursor:pointer;}' +
     'button.danger{background:#E5534B;color:#fff;}' +
     'button.danger:disabled{background:#B7C7C0;color:#fff;cursor:not-allowed;}' +
+    'button.secondary{background:#E9F6F0;color:#0B2018;border:1px solid rgba(10,70,52,0.2);}' +
     '#status{font-size:13px;margin-left:8px;}' +
+    '.section-head{display:flex;align-items:center;gap:12px;margin:28px 0 12px;}' +
+    '.section-head h2{margin:0;}' +
+    '.section-head label{font-size:12px;font-weight:600;color:#00382A;cursor:pointer;display:flex;align-items:center;gap:4px;}' +
   '</style></head><body>' +
     '<h1>WhenFree &middot; Expired Meeting Cleanup</h1>' +
     '<div class="sub">Review each meeting below, then select the ones to permanently delete from Firestore.</div>' +
     '<div class="bar">' +
-      '<input type="text" id="confirmPhrase" placeholder="Type DELETE to enable">' +
+      '<button class="secondary" id="selectAllBtn">Select all</button>' +
+      '<button class="secondary" id="clearBtn">Clear</button>' +
       '<button class="danger" id="deleteBtn" disabled>Delete selected</button>' +
       '<span id="status"></span>' +
     '</div>' +
-    '<h2>Dated events past their last date (' + dated.length + ')</h2>' +
-    datedHtml +
-    '<h2>Recurring events, no activity for ' + CLEANUP_CONFIG.staleDaysModeThresholdDays + '+ days (' + recurring.length + ')</h2>' +
-    recurringHtml +
+    '<div class="section-head">' +
+      '<h2 id="datedHeading">Dated events past their last date (' + dated.length + ')</h2>' +
+      '<label><input type="checkbox" class="section-pick" data-target="datedList"> Select all in section</label>' +
+    '</div>' +
+    '<div id="datedList">' + datedHtml + '</div>' +
+    '<div class="section-head">' +
+      '<h2 id="recurringHeading">Recurring events, no activity for ' + CLEANUP_CONFIG.staleDaysModeThresholdDays + '+ days (' + recurring.length + ')</h2>' +
+      '<label><input type="checkbox" class="section-pick" data-target="recurringList"> Select all in section</label>' +
+    '</div>' +
+    '<div id="recurringList">' + recurringHtml + '</div>' +
     '<script>' +
-      'var confirmInput = document.getElementById("confirmPhrase");' +
       'var deleteBtn = document.getElementById("deleteBtn");' +
       'var statusEl = document.getElementById("status");' +
-      'confirmInput.addEventListener("input", function() {' +
-        'deleteBtn.disabled = confirmInput.value !== "DELETE" || !document.querySelectorAll(".pick:checked").length;' +
-      '});' +
+      'function refreshDeleteBtn() {' +
+        'deleteBtn.disabled = !document.querySelectorAll(".pick:checked").length;' +
+      '}' +
       'document.addEventListener("change", function(e) {' +
-        'if (e.target.classList.contains("pick")) {' +
-          'deleteBtn.disabled = confirmInput.value !== "DELETE" || !document.querySelectorAll(".pick:checked").length;' +
+        'if (e.target.classList.contains("pick")) refreshDeleteBtn();' +
+        'if (e.target.classList.contains("section-pick")) {' +
+          'var list = document.getElementById(e.target.getAttribute("data-target"));' +
+          'list.querySelectorAll(".pick").forEach(function(cb) { cb.checked = e.target.checked; });' +
+          'refreshDeleteBtn();' +
         '}' +
       '});' +
+      'document.getElementById("selectAllBtn").addEventListener("click", function() {' +
+        'document.querySelectorAll(".pick").forEach(function(cb) { cb.checked = true; });' +
+        'document.querySelectorAll(".section-pick").forEach(function(cb) { cb.checked = true; });' +
+        'refreshDeleteBtn();' +
+      '});' +
+      'document.getElementById("clearBtn").addEventListener("click", function() {' +
+        'document.querySelectorAll(".pick").forEach(function(cb) { cb.checked = false; });' +
+        'document.querySelectorAll(".section-pick").forEach(function(cb) { cb.checked = false; });' +
+        'refreshDeleteBtn();' +
+      '});' +
+      'function updateHeading(headingId, listId) {' +
+        'var count = document.querySelectorAll("#" + listId + " .card").length;' +
+        'var heading = document.getElementById(headingId);' +
+        'heading.textContent = heading.textContent.replace(/\\(\\d+\\)$/, "(" + count + ")");' +
+        'if (!count) document.getElementById(listId).innerHTML = \'<div class="empty">None.</div>\';' +
+      '}' +
       'deleteBtn.addEventListener("click", function() {' +
-        'var ids = Array.prototype.map.call(document.querySelectorAll(".pick:checked"), function(el) { return el.value; });' +
+        'var checked = document.querySelectorAll(".pick:checked");' +
+        'var ids = Array.prototype.map.call(checked, function(el) { return el.value; });' +
         'if (!ids.length) return;' +
-        'if (!confirm("Permanently delete " + ids.length + " event(s)? This cannot be undone.")) return;' +
+        'var names = Array.prototype.map.call(checked, function(el) {' +
+          'return el.closest(".card").querySelector(".card-title").textContent;' +
+        '});' +
+        'if (!confirm("Permanently delete these " + ids.length + " event(s)? This cannot be undone.\\n\\n- " + names.join("\\n- "))) return;' +
         'deleteBtn.disabled = true;' +
         'statusEl.textContent = "Deleting...";' +
         'google.script.run' +
           '.withSuccessHandler(function(result) {' +
-            'statusEl.textContent = "Deleted " + result.deletedCount + " event(s). Reloading...";' +
-            'setTimeout(function() { location.reload(); }, 1200);' +
+            'result.deletedIds.forEach(function(id) {' +
+              'var card = document.querySelector(\'.card[data-id="\' + id + \'"]\');' +
+              'if (card) card.remove();' +
+            '});' +
+            'updateHeading("datedHeading", "datedList");' +
+            'updateHeading("recurringHeading", "recurringList");' +
+            'statusEl.textContent = "Deleted " + result.deletedCount + " event(s).";' +
+            'refreshDeleteBtn();' +
+            'setTimeout(function() { statusEl.textContent = ""; }, 3000);' +
           '})' +
           '.withFailureHandler(function(err) {' +
             'statusEl.textContent = "Error: " + err.message;' +
-            'deleteBtn.disabled = false;' +
+            'refreshDeleteBtn();' +
           '})' +
           '.deleteEvents(ids, "DELETE-CONFIRMED");' +
       '});' +
