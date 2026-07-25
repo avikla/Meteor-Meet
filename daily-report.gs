@@ -6,6 +6,7 @@ const REPORT_CONFIG = {
   recipient:  'avi.klayman@gmail.com',
   tz:         'Asia/Jerusalem',
   cleanupUrl: 'https://cleanup.whenfree.org/',
+  healthcheckPingUrl: PropertiesService.getScriptProperties().getProperty('HEALTHCHECK_PING_URL'),
   limits: {
     reads:   50000,
     writes:  20000,
@@ -324,6 +325,17 @@ function buildEmailHtml_(data) {
     '</table></td></tr></table></body></html>';
 }
 
+// ── Healthchecks.io dead-man's-switch ────────────────────────────────────────
+function pingHealthcheck_(suffix) {
+  var url = REPORT_CONFIG.healthcheckPingUrl;
+  if (!url) return;
+  try {
+    UrlFetchApp.fetch(url + (suffix || ''), { muteHttpExceptions: true });
+  } catch (e) {
+    console.error('Healthcheck ping failed: ' + e.message);
+  }
+}
+
 // ── Main entry point ──────────────────────────────────────────────────────────
 function sendDailyReport() {
   try {
@@ -352,10 +364,12 @@ function sendDailyReport() {
 
     console.log('Report sent for ' + win.dateLabel + ': events=' + eventCount +
       ', reads=' + reads + ', writes=' + writes + ', deletes=' + deletes + ', storage=' + storage);
+    pingHealthcheck_();
   } catch (err) {
     console.error('sendDailyReport failed: ' + err.message);
     GmailApp.sendEmail(REPORT_CONFIG.recipient, 'WhenFree · Daily DB Report FAILED',
       'The daily report script failed with error: ' + err.message);
+    pingHealthcheck_('/fail');
   }
 }
 

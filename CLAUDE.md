@@ -191,6 +191,8 @@ clasp push --force && clasp deploy --deploymentId AKfycbz7hknVlxm_K7RdFBV1gd7MbB
 
 One-time trigger: select `createTrigger` → Run in GAS editor after deploy.
 
+**Monitoring:** A healthchecks.io check ("WhenFree Daily Report") pings on every run — plain ping on success, `/fail` suffix on error — via `pingHealthcheck_()`. Its ping URL lives in Script Properties as `HEALTHCHECK_PING_URL`, never in source/docs. Because it alerts on a *missed* ping (not a reported failure), it also catches the case where the trigger silently doesn't execute at all — see the OAuth-scope-change gotcha below. Any time `oauthScopes` changes in `appsscript.json`, proactively re-run `createTrigger()` rather than waiting to notice a missing email or an inactive healthchecks.io alert.
+
 ## Design System — Verde (Material 3-aligned)
 
 ### Color Palette
