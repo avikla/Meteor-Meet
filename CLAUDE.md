@@ -65,7 +65,7 @@ git push
 - **i18n:** English, Hebrew (RTL), French — toggled via buttons or `?lang=` URL param
 - **Language URL params:** `?lang=fr`, `?lang=he`, `?lang=en` — detected on load, updated in URL on change. Works with event hashes: `whenfree.org/?lang=fr#eventSlug`
 - **No login required:** Share a link, participants add their name and availability
-- **Daily DB report:** Automated midnight email with Firestore event count, reads/writes/deletes vs. free-tier limits, storage usage, and a direct link (with `ADMIN_TOKEN` embedded) to the expired-meeting cleanup page
+- **Daily DB report:** Automated midnight email with Firestore event count, reads/writes/deletes vs. free-tier limits, storage usage, and a link (`https://cleanup.whenfree.org/`) to the expired-meeting cleanup page — the short URL means `ADMIN_TOKEN` no longer needs to appear in the email body at all (Cloudflare's redirect rule carries it server-side)
 - **Smart disabled states:** `syncActionStates()` disables "Send best times" when no slots exist; re-enables reactively
 - **Floating email panels:** Email input panels use `position:fixed` (no layout shift when opened)
 - **Onboarding lang picker:** First-time visitors see EN/FR/HE buttons at the top of the help modal — clicking one calls `setLang()` and re-renders the modal content instantly in the chosen language before the user reads it
@@ -185,7 +185,7 @@ clasp push --force && clasp deploy --deploymentId AKfycbz7hknVlxm_K7RdFBV1gd7MbB
 
 - `@HEAD` deployment ID: `AKfycbwVGimKBjWg3PRYpkRLPFcW1vbdQV7KxpJepNOwcSzg` (dev/test only)
 - Production deployment ID: `AKfycbz7hknVlxm_K7RdFBV1gd7MbBz3KYsq7PQ2UgqHHByTxM2PI2W21T8p3sZ6qIenPMPDNg` — serves `mailer.gs`'s `doPost` (`ANYONE_ANONYMOUS`, called from public client JS). Never change its access level.
-- Admin cleanup deployment ID: `AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg` — serves `cleanup.gs`'s `doGet` privately (Execute as: Me, Access: Only myself). URL: `https://script.google.com/macros/s/AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg/exec?token=<ADMIN_TOKEN>` (token stored in Script Properties as `ADMIN_TOKEN`).
+- Admin cleanup deployment ID: `AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg` — serves `cleanup.gs`'s `doGet` privately (Execute as: Me, Access: Only myself). Raw URL: `https://script.google.com/macros/s/AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg/exec?token=<ADMIN_TOKEN>` (token stored in Script Properties as `ADMIN_TOKEN`) — but use the short `https://cleanup.whenfree.org/` link day-to-day (see Domain & Redirects). If this deployment is ever recreated (new deployment ID), the Cloudflare redirect rule's target URL must be updated to match.
 
 ## GAS Daily Report
 

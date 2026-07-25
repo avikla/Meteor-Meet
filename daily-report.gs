@@ -5,8 +5,7 @@ const REPORT_CONFIG = {
   collection: 'events',
   recipient:  'avi.klayman@gmail.com',
   tz:         'Asia/Jerusalem',
-  cleanupUrl: 'https://script.google.com/macros/s/AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg/exec' +
-              '?token=' + PropertiesService.getScriptProperties().getProperty('ADMIN_TOKEN'),
+  cleanupUrl: 'https://cleanup.whenfree.org/',
   limits: {
     reads:   50000,
     writes:  20000,
