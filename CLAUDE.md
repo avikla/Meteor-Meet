@@ -42,6 +42,7 @@ git push
 
 - **Live site:** `whenfree.org` → GitHub Pages (Cloudflare DNS)
 - **Legacy redirect:** `meet.meteor.co.il` → `whenfree.org` via Cloudflare Redirect Rule (Dynamic, preserves query string)
+- **Cleanup admin shortcut:** `cleanup.whenfree.org` → private expired-meeting cleanup page (GAS `cleanup.gs` deployment URL, with `ADMIN_TOKEN` baked into the rule's target). Cloudflare Redirect Rule (Wildcard, 302) on a dedicated proxied DNS record (`A` → `192.0.2.1`, a reserved placeholder IP — the redirect fires before that IP is ever reached). Kept on its own subdomain rather than a path on the apex domain specifically to avoid switching the main `whenfree.org` record to proxied, which would route all live site traffic through Cloudflare and risk breaking GitHub Pages' TLS handling. If `ADMIN_TOKEN` is ever rotated in GAS Script Properties, this rule's target URL must be updated to match.
 - **Email forwarding (incoming):** Cloudflare Email Routing catch-all → `avi.klayman@gmail.com`
 - **Email sending (outgoing):** ZeptoMail transactional API from `no-reply@whenfree.org` (via GAS `mailer.gs`)
 - **Contact:** `avi@whenfree.org`
