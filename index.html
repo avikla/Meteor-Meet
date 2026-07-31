@@ -723,6 +723,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflo
   .cal-overlay.visible .cal-panel{transform:scale(1) translateY(0)}
 }
 
+.tz-header{
+  font-size:12px;color:var(--muted);text-align:center;
+  padding:0 8px 8px;
+}
 .grid-scroll{flex:1;overflow:auto;position:relative;display:flex;justify-content:center;align-items:flex-start;padding:0 8px}
 .grid-scroll::-webkit-scrollbar{width:6px;height:6px}
 .grid-scroll::-webkit-scrollbar-track{background:transparent}
@@ -751,6 +755,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflo
 .grid-time-label{
   font-size:11px;font-weight:400;color:var(--muted);
   display:flex;align-items:flex-start;justify-content:flex-end;
+  direction:ltr;
   padding-right:8px;height:22px;
   letter-spacing:0.02em;white-space:nowrap;padding-top:1px;
 }
@@ -1609,6 +1614,7 @@ body.a11y-adhd .a11y-panel{opacity:1 !important;pointer-events:auto !important}
         <span class="legend-label" data-i18n="legendEveryone">Everyone</span>
       </div>
     </div>
+    <div id="tz-header" class="tz-header"></div>
     <div class="grid-scroll">
       <div id="avail-grid" class="avail-grid"></div>
     </div>
@@ -1725,6 +1731,8 @@ const LANGS = {
     whatsappMsg:(name,url)=>`Join my meeting: *${name}*\n${url}`,
     sendEmail:`${_EMAIL} Email meeting link`, newEvent:`${_PLUS}<span class="nav-label">New meeting</span>`, editTitle:'Edit meeting name',
     gridHint:'Click or drag to mark your free times.', gridHintMobile:'Tap to mark your free times.',
+    tzShownIn:(tz)=>`Times shown in ${tz}.`,
+    tzShownInLocal:(eventTz,viewerTz)=>`Times shown in ${eventTz} · your local time zone is ${viewerTz}.`,
     creatorNudge:'Step 1: click or drag the grid below to mark when YOU are free',
     creatorNudgeMobile:'Step 1: tap the grid below to mark when YOU are free',
     creatorNudgeShare:'Step 2: share the link so others can add their times',
@@ -1818,6 +1826,8 @@ const LANGS = {
     whatsappMsg:(name,url)=>`הצטרפו לפגישה: *${name}*\n${url}`,
     sendEmail:`${_EMAIL} שלח קישור למייל`, newEvent:`${_PLUS}<span class="nav-label">פגישה חדשה</span>`, editTitle:'עריכת שם הפגישה',
     gridHint:'לחץ או גרור כדי לסמן זמינות.', gridHintMobile:'לחץ כדי לסמן זמינות.',
+    tzShownIn:(tz)=>`הזמנים מוצגים לפי ${tz}.`,
+    tzShownInLocal:(eventTz,viewerTz)=>`הזמנים מוצגים לפי ${eventTz} · אזור הזמן המקומי שלך הוא ${viewerTz}.`,
     creatorNudge:'שלב 1: לחץ או גרור על הרשת למטה כדי לסמן מתי אתה פנוי',
     creatorNudgeMobile:'שלב 1: הקש על הרשת למטה כדי לסמן מתי אתה פנוי',
     creatorNudgeShare:'שלב 2: שתף את הקישור כדי שאחרים יוסיפו את הזמינות שלהם',
@@ -1911,6 +1921,8 @@ const LANGS = {
     whatsappMsg:(name,url)=>`Rejoignez ma réunion : *${name}*\n${url}`,
     sendEmail:`${_EMAIL} Lien par e-mail`, newEvent:`${_PLUS}<span class="nav-label">Nouvelle réunion</span>`, editTitle:'Modifier le nom de la réunion',
     gridHint:'Cliquez ou faites glisser pour indiquer vos disponibilités.', gridHintMobile:'Appuyez pour indiquer vos disponibilités.',
+    tzShownIn:(tz)=>`Horaires affichés en ${tz}.`,
+    tzShownInLocal:(eventTz,viewerTz)=>`Horaires affichés en ${eventTz} · votre fuseau horaire local est ${viewerTz}.`,
     creatorNudge:'Étape 1 : cliquez ou faites glisser sur la grille ci-dessous pour indiquer quand VOUS êtes libre',
     creatorNudgeMobile:'Étape 1 : touchez la grille ci-dessous pour indiquer quand VOUS êtes libre',
     creatorNudgeShare:'Étape 2 : partagez le lien pour que les autres ajoutent leurs disponibilités',
@@ -2258,6 +2270,33 @@ function nowInEventTz() {
   const totalMins = (+p.hour % 24) * 60 + +p.minute;
   const dow       = new Date(`${dateStr}T12:00:00`).getDay();
   return { dateStr, totalMins, dow };
+}
+
+function getViewerTz() {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+function refDateForWeekday(dayLabel) {
+  // "days" mode has no calendar date — anchor to the next upcoming occurrence of that weekday.
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const targetDay = dayNames.findIndex(n => dayLabel.startsWith(n.slice(0,3)));
+  const today = new Date();
+  const diff = ((targetDay - today.getDay() + 7) % 7) || 7;
+  const next = new Date(today.getFullYear(), today.getMonth(), today.getDate() + diff);
+  return { year: next.getFullYear(), month: next.getMonth() + 1, day: next.getDate() };
+}
+
+function tzFullName(tz, refDate) {
+  const d = new Date(refDate.year, refDate.month - 1, refDate.day);
+  const parts = new Intl.DateTimeFormat(t().locale, { timeZone: tz, timeZoneName: 'long' }).formatToParts(d);
+  return (parts.find(p => p.type === 'timeZoneName') || {}).value || tz;
+}
+
+function minsToViewerLabel(refDate, mins, viewerTz) {
+  const utcDate = wallTimeToUtc(refDate.year, refDate.month, refDate.day, mins, S.timezone);
+  return new Intl.DateTimeFormat(t().locale, {
+    timeZone: viewerTz, hour: 'numeric', minute: '2-digit', hour12: t().ampm,
+  }).format(utcDate);
 }
 
 function onCalDown(e) {
@@ -2713,7 +2752,26 @@ function buildGrid() {
   S.cachedCols = cols;
   S.cachedRows = rows;
 
-  const timeW = '54px';
+  const viewerTz = getViewerTz();
+  const showViewerTz = cols.length > 0 && viewerTz !== S.timezone;
+  let refDate = null;
+  if (cols.length > 0) {
+    if (S.mode === 'specific') {
+      const [y, mo, d] = cols[0].split('-').map(Number);
+      refDate = { year: y, month: mo, day: d };
+    } else {
+      refDate = refDateForWeekday(cols[0]);
+    }
+  }
+
+  const tzHeader = document.getElementById('tz-header');
+  if (tzHeader) {
+    tzHeader.textContent = !refDate ? '' : showViewerTz
+      ? t().tzShownInLocal(tzFullName(S.timezone, refDate), tzFullName(viewerTz, refDate))
+      : t().tzShownIn(tzFullName(S.timezone, refDate));
+  }
+
+  const timeW = showViewerTz ? '92px' : '54px';
   grid.style.gridTemplateColumns = `${timeW} repeat(${cols.length}, 62px)`;
 
   // Corner
@@ -2738,7 +2796,11 @@ function buildGrid() {
   rows.forEach((mins, r) => {
     const tl = document.createElement('div');
     tl.className = 'grid-time-label';
-    if (r % 2 === 0) tl.textContent = minsToLabel(mins);
+    if (r % 2 === 0) {
+      tl.textContent = showViewerTz
+        ? `${minsToLabel(mins)} · ${minsToViewerLabel(refDate, mins, viewerTz)}`
+        : minsToLabel(mins);
+    }
     grid.appendChild(tl);
 
     cols.forEach((col, c) => {
@@ -3538,13 +3600,7 @@ function buildCalDate(slot) {
   if (slot.mode === 'specific') {
     [year, month, day] = slot.colVal.split('-').map(Number);
   } else {
-    // days mode — find next upcoming occurrence of the weekday
-    const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const targetDay = dayNames.findIndex(n => slot.colVal.startsWith(n.slice(0,3)));
-    const today = new Date();
-    const diff = ((targetDay - today.getDay() + 7) % 7) || 7;
-    const next = new Date(today.getFullYear(), today.getMonth(), today.getDate() + diff);
-    year = next.getFullYear(); month = next.getMonth() + 1; day = next.getDate();
+    ({ year, month, day } = refDateForWeekday(slot.colVal));
   }
   const pad = n => String(n).padStart(2,'0');
   const startH = Math.floor(slot.startMins / 60), startM = slot.startMins % 60;
