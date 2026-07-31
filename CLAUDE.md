@@ -69,6 +69,7 @@ git push
 - **Smart disabled states:** `syncActionStates()` disables "Send best times" when no slots exist; re-enables reactively
 - **Floating email panels:** Email input panels use `position:fixed` (no layout shift when opened)
 - **Onboarding lang picker:** First-time visitors see EN/FR/HE buttons at the top of the help modal — clicking one calls `setLang()` and re-renders the modal content instantly in the chosen language before the user reads it
+- **Viewer-local timezone annotation:** The grid is always rendered in the single event-level `S.timezone` (set once by the creator — cell identity is `col:row` grid-position indices, not absolute timestamps, so there's no per-viewer grid reflow). To reduce cross-timezone confusion without touching that data model, `buildGrid()` detects the viewer's browser timezone (`getViewerTz()`) and, only when it differs from `S.timezone`: shows a header above the grid ("Times shown in X · your local time zone is Y", localized EN/FR/HE) and appends the viewer's local-time equivalent to each hourly row label (`09:00 · 10:00`). Purely a display-layer addition — no Firestore/storage changes. Known limitation: in recurring "days of week" mode there's no calendar date, so a slot near midnight can shift to a different weekday for the viewer without the column label reflecting that.
 
 ## Email System
 
@@ -95,6 +96,10 @@ git push
 | `scheduleNotifyOrganizer(name)` | Debounced (120s) notification to creator when a participant marks cells — only fires on cell marks, not on join |
 | `toggleEmailPanel(panelId, btnId, otherPanelId)` | Opens/closes floating email input panels via `position:fixed` |
 | `setLang(code)` | Sets language, updates localStorage and URL (`?lang=`) |
+| `getViewerTz()` | Returns the browser's IANA timezone (`Intl.DateTimeFormat().resolvedOptions().timeZone`) |
+| `refDateForWeekday(dayLabel)` | Resolves a "days" mode weekday label to the next upcoming calendar date — shared by `buildCalDate()` and the grid's viewer-tz row-label conversion |
+| `tzFullName(tz, refDate)` | Long localized timezone name (e.g. "Central European Summer Time") via `Intl.DateTimeFormat(..., {timeZoneName:'long'})`, used in the grid's tz header |
+| `minsToViewerLabel(refDate, mins, viewerTz)` | Converts an event-tz wall-clock minutes value to the viewer's local-time label string, via `wallTimeToUtc()` |
 
 ## SVG Icon Constants
 
@@ -136,6 +141,7 @@ Each event document stores:
 - **Name overlay (join dialog)**: `position:fixed` inside `@media(max-width:640px)` — needed because `#screen-event` has `height:auto` on mobile, making `position:absolute;inset:0` center off-screen.
 - **Touch detection**: `navigator.maxTouchPoints > 0` in `applyLang()` swaps `markSub`→`markSubMobile` and `gridHint`→`gridHintMobile` (tap vs drag/click wording).
 - **Onboarding modal header**: `.onboard-header` is a `display:flex; justify-content:space-between` row containing `.onboard-lang` (the EN/FR/HE pill) and `.onboard-close` (the ✕ button). The close button is **not** `position:absolute` — it's in normal flow inside the header. Do not make it absolute again; that causes overlap with the lang pill.
+- **Multiple LTR fragments in one RTL text node get reordered**: `.grid-time-label` concatenates two separate time strings (event tz + viewer tz, e.g. `09:00 · 10:00`) into one text node. Under Hebrew's `dir="rtl"`, the bidi algorithm reordered the two fragments (`10:00 · 09:00`) even though each fragment alone renders fine. Fixed with `direction:ltr` on `.grid-time-label` so the compound time string always renders in authored order regardless of page language. Watch for this pattern anywhere two+ LTR tokens are joined into one string inside an RTL-rendered element.
 
 ## Firestore Security Rules
 

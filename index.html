@@ -2292,6 +2292,19 @@ function tzFullName(tz, refDate) {
   return (parts.find(p => p.type === 'timeZoneName') || {}).value || tz;
 }
 
+function tzAbbrev(tz, refDate) {
+  // Uses 'shortOffset' (always "GMT±H"), not 'short' (returns letter abbreviations like
+  // "EDT" for a handful of US zones but "GMT+3" for most others) — keeps the format
+  // consistent across every timezone instead of mixing styles.
+  const d = new Date(refDate.year, refDate.month - 1, refDate.day);
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' }).formatToParts(d);
+  return (parts.find(p => p.type === 'timeZoneName') || {}).value || tz;
+}
+
+function tzLabelWithAbbrev(tz, refDate) {
+  return `${tzFullName(tz, refDate)} (${tzAbbrev(tz, refDate)})`;
+}
+
 function minsToViewerLabel(refDate, mins, viewerTz) {
   const utcDate = wallTimeToUtc(refDate.year, refDate.month, refDate.day, mins, S.timezone);
   return new Intl.DateTimeFormat(t().locale, {
@@ -2767,8 +2780,8 @@ function buildGrid() {
   const tzHeader = document.getElementById('tz-header');
   if (tzHeader) {
     tzHeader.textContent = !refDate ? '' : showViewerTz
-      ? t().tzShownInLocal(tzFullName(S.timezone, refDate), tzFullName(viewerTz, refDate))
-      : t().tzShownIn(tzFullName(S.timezone, refDate));
+      ? t().tzShownInLocal(tzLabelWithAbbrev(S.timezone, refDate), tzLabelWithAbbrev(viewerTz, refDate))
+      : t().tzShownIn(tzLabelWithAbbrev(S.timezone, refDate));
   }
 
   const timeW = showViewerTz ? '92px' : '54px';
