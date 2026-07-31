@@ -2274,7 +2274,11 @@ function onCalEnter(e) {
   applyCalCell(e.currentTarget.dataset.date);
 }
 
-document.addEventListener('mouseup', () => { calDragging = false; gridDragging = false; });
+document.addEventListener('mouseup', () => {
+  calDragging = false;
+  gridDragging = false;
+  flushGridWrite();
+});
 
 function applyCalCell(dt) {
   if (dt < isoDate(new Date())) return;
@@ -3022,6 +3026,7 @@ function scheduleNotifyOrganizer(participantName) {
 // which silently drops the notification since most participants mark cells and leave.
 // `keepalive` lets the fetch in fireNotifyOrganizer complete after unload.
 window.addEventListener('pagehide', () => {
+  flushGridWrite();
   if (_pendingNotifyName === null) return;
   clearTimeout(_notifyTimer);
   const name = _pendingNotifyName;
@@ -3176,12 +3181,25 @@ function toggleCell(id) {
   else S.currentUser.availability.delete(id);
   renderHeatmap();
   scheduleNotifyOrganizer(S.currentUser.name);
-  // Persist to Firestore atomically
-  const op = gridDragMode === 'add'
-    ? firebase.firestore.FieldValue.arrayUnion(id)
-    : firebase.firestore.FieldValue.arrayRemove(id);
+  // Persist to Firestore in a batched write (see scheduleGridFlush/flushGridWrite)
+  // rather than one .update() per cell — a multi-cell drag would otherwise fire
+  // one Firestore write (and one onSnapshot read for every open viewer) per cell.
+  gridWriteDirty = true;
+  scheduleGridFlush();
+}
+
+let gridWriteDirty = false;
+let gridFlushTimer = null;
+function scheduleGridFlush() {
+  clearTimeout(gridFlushTimer);
+  gridFlushTimer = setTimeout(flushGridWrite, 400);
+}
+function flushGridWrite() {
+  clearTimeout(gridFlushTimer);
+  if (!gridWriteDirty || !S.currentUser) return;
+  gridWriteDirty = false;
   db.collection('events').doc(S.eventSlug).update({
-    [`participants.${S.currentUser.name}.availability`]: op,
+    [`participants.${S.currentUser.name}.availability`]: Array.from(S.currentUser.availability),
   }).catch(e => console.error('Failed to update availability:', e));
 }
 
