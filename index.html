@@ -725,7 +725,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflo
 
 .tz-header{
   font-size:12px;color:var(--muted);text-align:center;
-  padding:0 8px 8px;
+  padding:0 8px 8px;line-height:1.6;
 }
 .grid-scroll{flex:1;overflow:auto;position:relative;display:flex;justify-content:center;align-items:flex-start;padding:0 8px}
 .grid-scroll::-webkit-scrollbar{width:6px;height:6px}
@@ -738,6 +738,13 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflo
   user-select:none;width:max-content;
 }
 .grid-corner{}
+.grid-tz-col-head{
+  display:flex;flex-direction:column;justify-content:flex-end;align-items:center;
+  padding:0 4px 12px;min-width:54px;
+  font-size:10.5px;font-weight:700;color:var(--muted2);
+  letter-spacing:0.02em;direction:ltr;font-variant-numeric:tabular-nums;
+}
+.grid-tz-col-head-viewer{color:var(--accent)}
 .grid-col-header{
   text-align:center;padding:0 4px 12px;
   display:flex;flex-direction:column;align-items:center;gap:3px;
@@ -758,6 +765,10 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflo
   direction:ltr;
   padding-right:8px;height:22px;
   letter-spacing:0.02em;white-space:nowrap;padding-top:1px;
+}
+.grid-time-label-viewer{
+  justify-content:center;padding-right:0;
+  color:var(--text);font-weight:600;
 }
 .grid-cell{
   height:22px;min-width:62px;
@@ -1732,7 +1743,7 @@ const LANGS = {
     sendEmail:`${_EMAIL} Email meeting link`, newEvent:`${_PLUS}<span class="nav-label">New meeting</span>`, editTitle:'Edit meeting name',
     gridHint:'Click or drag to mark your free times.', gridHintMobile:'Tap to mark your free times.',
     tzShownIn:(tz)=>`Times shown in ${tz}.`,
-    tzShownInLocal:(eventTz,viewerTz)=>`Times shown in ${eventTz} · your local time zone is ${viewerTz}.`,
+    tzYourLocal:(viewerTz)=>`Your local time zone is ${viewerTz}.`,
     creatorNudge:'Step 1: click or drag the grid below to mark when YOU are free',
     creatorNudgeMobile:'Step 1: tap the grid below to mark when YOU are free',
     creatorNudgeShare:'Step 2: share the link so others can add their times',
@@ -1827,7 +1838,7 @@ const LANGS = {
     sendEmail:`${_EMAIL} שלח קישור למייל`, newEvent:`${_PLUS}<span class="nav-label">פגישה חדשה</span>`, editTitle:'עריכת שם הפגישה',
     gridHint:'לחץ או גרור כדי לסמן זמינות.', gridHintMobile:'לחץ כדי לסמן זמינות.',
     tzShownIn:(tz)=>`הזמנים מוצגים לפי ${tz}.`,
-    tzShownInLocal:(eventTz,viewerTz)=>`הזמנים מוצגים לפי ${eventTz} · אזור הזמן המקומי שלך הוא ${viewerTz}.`,
+    tzYourLocal:(viewerTz)=>`אזור הזמן המקומי שלך הוא ${viewerTz}.`,
     creatorNudge:'שלב 1: לחץ או גרור על הרשת למטה כדי לסמן מתי אתה פנוי',
     creatorNudgeMobile:'שלב 1: הקש על הרשת למטה כדי לסמן מתי אתה פנוי',
     creatorNudgeShare:'שלב 2: שתף את הקישור כדי שאחרים יוסיפו את הזמינות שלהם',
@@ -1922,7 +1933,7 @@ const LANGS = {
     sendEmail:`${_EMAIL} Lien par e-mail`, newEvent:`${_PLUS}<span class="nav-label">Nouvelle réunion</span>`, editTitle:'Modifier le nom de la réunion',
     gridHint:'Cliquez ou faites glisser pour indiquer vos disponibilités.', gridHintMobile:'Appuyez pour indiquer vos disponibilités.',
     tzShownIn:(tz)=>`Horaires affichés en ${tz}.`,
-    tzShownInLocal:(eventTz,viewerTz)=>`Horaires affichés en ${eventTz} · votre fuseau horaire local est ${viewerTz}.`,
+    tzYourLocal:(viewerTz)=>`Votre fuseau horaire local est ${viewerTz}.`,
     creatorNudge:'Étape 1 : cliquez ou faites glisser sur la grille ci-dessous pour indiquer quand VOUS êtes libre',
     creatorNudgeMobile:'Étape 1 : touchez la grille ci-dessous pour indiquer quand VOUS êtes libre',
     creatorNudgeShare:'Étape 2 : partagez le lien pour que les autres ajoutent leurs disponibilités',
@@ -2779,16 +2790,34 @@ function buildGrid() {
 
   const tzHeader = document.getElementById('tz-header');
   if (tzHeader) {
-    tzHeader.textContent = !refDate ? '' : showViewerTz
-      ? t().tzShownInLocal(tzLabelWithAbbrev(S.timezone, refDate), tzLabelWithAbbrev(viewerTz, refDate))
-      : t().tzShownIn(tzLabelWithAbbrev(S.timezone, refDate));
+    tzHeader.innerHTML = '';
+    if (refDate) {
+      const l1 = document.createElement('div');
+      l1.textContent = t().tzShownIn(tzLabelWithAbbrev(S.timezone, refDate));
+      tzHeader.appendChild(l1);
+      if (showViewerTz) {
+        const l2 = document.createElement('div');
+        l2.textContent = t().tzYourLocal(tzLabelWithAbbrev(viewerTz, refDate));
+        tzHeader.appendChild(l2);
+      }
+    }
   }
 
-  const timeW = showViewerTz ? '92px' : '54px';
-  grid.style.gridTemplateColumns = `${timeW} repeat(${cols.length}, 62px)`;
+  const timeCols = showViewerTz ? '54px 54px' : '54px';
+  grid.style.gridTemplateColumns = `${timeCols} repeat(${cols.length}, 62px)`;
 
-  // Corner
-  grid.appendChild(Object.assign(document.createElement('div'), {className:'grid-corner'}));
+  // Corner (or, when cross-timezone, two small GMT-offset column headers)
+  const cornerEvent = document.createElement('div');
+  cornerEvent.className = showViewerTz ? 'grid-tz-col-head' : 'grid-corner';
+  if (showViewerTz) cornerEvent.textContent = tzAbbrev(S.timezone, refDate);
+  grid.appendChild(cornerEvent);
+
+  if (showViewerTz) {
+    const cornerViewer = document.createElement('div');
+    cornerViewer.className = 'grid-tz-col-head grid-tz-col-head-viewer';
+    cornerViewer.textContent = tzAbbrev(viewerTz, refDate);
+    grid.appendChild(cornerViewer);
+  }
 
   // Column headers
   cols.forEach((col, c) => {
@@ -2809,12 +2838,15 @@ function buildGrid() {
   rows.forEach((mins, r) => {
     const tl = document.createElement('div');
     tl.className = 'grid-time-label';
-    if (r % 2 === 0) {
-      tl.textContent = showViewerTz
-        ? `${minsToLabel(mins)} · ${minsToViewerLabel(refDate, mins, viewerTz)}`
-        : minsToLabel(mins);
-    }
+    if (r % 2 === 0) tl.textContent = minsToLabel(mins);
     grid.appendChild(tl);
+
+    if (showViewerTz) {
+      const tlv = document.createElement('div');
+      tlv.className = 'grid-time-label grid-time-label-viewer';
+      if (r % 2 === 0) tlv.textContent = minsToViewerLabel(refDate, mins, viewerTz);
+      grid.appendChild(tlv);
+    }
 
     cols.forEach((col, c) => {
       const cell = document.createElement('div');
