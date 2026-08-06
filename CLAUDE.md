@@ -24,9 +24,10 @@ git push
 | File | Role |
 |------|------|
 | `index.html` | Single-page app (HTML, CSS, JS inline) with Firebase Firestore integration |
-| `mailer.gs` | Google Apps Script — sends all emails via ZeptoMail API from `no-reply@whenfree.org` (display name "WhenFree"). Token stored in GAS Script Properties as `ZEPTO_API_KEY`. |
-| `daily-report.gs` | GAS — daily DB usage report to `avi@whenfree.org` at midnight IST |
-| `cleanup.gs` | GAS — private web-app admin page (`doGet`) to review and delete expired events. Separate deployment from the production mailer/report webapp; see GAS Deployment section. |
+| ~~`mailer.gs`~~ | **Removed** (commit `54482a5`, "Retire GAS mailer web app now that mail runs through the Cloud Function"). Superseded by `functions/index.js`. See Email System section. |
+| `functions/index.js` | Firebase Cloud Function (`sendMail`) — sends all app + `daily-report.gs` emails via ZeptoMail API from `no-reply@whenfree.org`. Auth via `X-WhenFree-Key` header check. Deployed at `https://us-central1-meteor-meet.cloudfunctions.net/sendMail`. |
+| `daily-report.gs` | GAS — daily DB usage report to `avi.klayman@gmail.com` at midnight IST |
+| `cleanup.gs` | GAS — private web-app admin page (`doGet`) to review and delete expired events. Separate deployment from other GAS entry points; see GAS Deployment section. |
 | `appsscript.json` | GAS manifest — OAuth scopes, timezone (Asia/Jerusalem), runtime |
 | `icons/favicon.svg` | App favicon (calendar + checkmark icon) |
 | `icons/` | Icon set: `icon-16/32/64/128/256/512.svg`, `logo-wordmark.svg`, `logo-wordmark-light.svg` |
@@ -44,7 +45,7 @@ git push
 - **Legacy redirect:** `meet.meteor.co.il` → `whenfree.org` via Cloudflare Redirect Rule (Dynamic, preserves query string)
 - **Cleanup admin shortcut:** `cleanup.whenfree.org` → private expired-meeting cleanup page (GAS `cleanup.gs` deployment URL, with `ADMIN_TOKEN` baked into the rule's target). Cloudflare Redirect Rule (Wildcard, 302) on a dedicated proxied DNS record (`A` → `192.0.2.1`, a reserved placeholder IP — the redirect fires before that IP is ever reached). Kept on its own subdomain rather than a path on the apex domain specifically to avoid switching the main `whenfree.org` record to proxied, which would route all live site traffic through Cloudflare and risk breaking GitHub Pages' TLS handling. If `ADMIN_TOKEN` is ever rotated in GAS Script Properties, this rule's target URL must be updated to match.
 - **Email forwarding (incoming):** Cloudflare Email Routing catch-all → `avi.klayman@gmail.com`
-- **Email sending (outgoing):** ZeptoMail transactional API from `no-reply@whenfree.org` (via GAS `mailer.gs`)
+- **Email sending (outgoing):** ZeptoMail transactional API from `no-reply@whenfree.org` (via the `sendMail` Cloud Function, `functions/index.js`)
 - **Contact:** `avi@whenfree.org`
 
 ## Software Directory Listings (PAD)
@@ -73,9 +74,10 @@ git push
 
 ## Email System
 
-- **Sender:** ZeptoMail transactional API via `UrlFetchApp.fetch()` in GAS, from `no-reply@whenfree.org`, display name "WhenFree"
-- **Endpoint:** `https://api.zeptomail.com/v1.1/email` (US region)
-- **Auth:** `Authorization: <ZEPTO_API_KEY>` — token stored in GAS Script Properties as `ZEPTO_API_KEY`, value includes the full `Zoho-enczapikey <base64>` prefix. Used directly (`.trim()` applied). Never in source code.
+- **Sender:** ZeptoMail transactional API, called via a Firebase Cloud Function (`functions/index.js`, `sendMail`) at `https://us-central1-meteor-meet.cloudfunctions.net/sendMail` — not GAS. `index.html` calls it via `fetch()` (`sendEmailViaGAS()`, despite the name); `daily-report.gs` calls it via `UrlFetchApp.fetch()` through its own `sendEmailViaFunction_()` helper. Both pass an `X-WhenFree-Key` header for a light abuse-deterrent check (`checkAuth()` in the Cloud Function) — not a real secret, the key is a public constant shipped in `index.html`.
+- **Endpoint:** `https://api.zeptomail.com/v1.1/email` (US region) — called server-side by the Cloud Function, not directly by GAS or the browser.
+- **Auth:** `Authorization: <ZEPTO_API_KEY>` — read via `process.env.ZEPTO_API_KEY` in the Cloud Function (exact provisioning — env var vs. Secret Manager — not documented here; check the Cloud Function's deploy config if it needs rotating). Never in source code.
+- **daily-report.gs:** sends its nightly report and failure-alert emails through this same Cloud Function via `sendEmailViaFunction_()` — previously used `GmailApp.sendEmail()`, which required the restricted `https://mail.google.com/` OAuth scope and caused the trigger's authorization to silently expire roughly every 7 days on this unverified GAS project (see the trigger-reliability gotcha above). Removing that scope by moving to the Cloud Function eliminates that failure mode.
 - **Template:** `buildEmailTemplate(bodyHtml, dir)` — dark forest header with calendar-check icon + "WhenFree" wordmark, verde palette card, sage background
 - **Email types:** creator confirmation, invite to mark availability, best times, organizer notification (all localized EN/HE/FR with RTL support)
 - **Organizer notification:** `scheduleNotifyOrganizer(name)` — debounced 120s after last cell mark (not on join). Sends branded HTML with participant avatar initial chip.
@@ -171,7 +173,7 @@ curl -s -H "Authorization: Bearer $TOKEN" -H "x-goog-user-project: meteor-meet" 
 - **`escHtml()` is mandatory for all `innerHTML` injection** — any user-supplied string (participant name, event name, etc.) must go through `escHtml()` before being interpolated into an HTML template string. Using `textContent` is always safe and preferred; switch to `innerHTML` only when you need to embed tags (e.g. `<br>` between name parts). The `escHtml` helper is defined near the bottom of the script block.
 - **Crypto tokens use `crypto.getRandomValues()`** — never `Math.random()` for anything used as a security identifier. Event slugs: `Uint8Array(5)` → base-36. Creator tokens: `Uint8Array(24)` → hex (192 bits).
 - **Firebase scripts are in `<body>`** — the two Firebase CDN `<script>` tags live just before the inline app `<script>` (near line 1546), not in `<head>`. This prevents them from blocking initial HTML render. Do not move them back to `<head>`.
-- **GAS mailer is an open relay** — `mailer.gs` `doPost()` accepts any `to_email` with no auth check. The endpoint URL is visible in client JS. If email abuse becomes a concern, add a shared secret in GAS Script Properties and validate it in `doPost`.
+- **Mail Cloud Function has a shared-secret gate, not an open relay** — `functions/index.js`'s `sendMail` checks an `X-WhenFree-Key` header (`checkAuth()`) and returns 403 on mismatch. The key is a public constant in `index.html` (not a real secret — it's shipped to every browser), so this is a light abuse-deterrent, not strong auth; `to_email` itself is still unrestricted once the header matches. (Historical note: the predecessor `mailer.gs` GAS webapp truly had no auth check at all — this was fixed as part of the Cloud Function migration.)
 
 ## Event Listener Patterns
 
@@ -183,21 +185,31 @@ curl -s -H "Authorization: Bearer $TOKEN" -H "x-goog-user-project: meteor-meet" 
 
 **GAS project:** `https://script.google.com/d/1MCoKYf2EVaueAzpjWAmHdvzubUcj3NqLAXzrBic6oRZgxacpnf44uYBD/edit`
 
-Push + deploy in one command (no GAS editor needed):
+For `daily-report.gs` (or any shared file) changes, a plain push is enough — `sendDailyReport`'s time-based trigger runs against `@HEAD`, confirmed 2026-08-06 (manual run + real trigger both picked up a same-day push with no redeploy step):
 
 ```powershell
-clasp push --force && clasp deploy --deploymentId AKfycbz7hknVlxm_K7RdFBV1gd7MbBz3KYsq7PQ2UgqHHByTxM2PI2W21T8p3sZ6qIenPMPDNg
+clasp push --force
 ```
 
+`cleanup.gs` is different: `cleanup.whenfree.org` serves a specific **pinned** deployment version (see Admin cleanup deployment ID below), not `@HEAD`. If you change `cleanup.gs`, push first, then redeploy that specific ID to bump what's actually live:
+
+```powershell
+clasp push --force && clasp deploy --deploymentId AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg
+```
+
+Confirmed live deployments (via `clasp deployments`, 2026-08-06):
 - `@HEAD` deployment ID: `AKfycbwVGimKBjWg3PRYpkRLPFcW1vbdQV7KxpJepNOwcSzg` (dev/test only)
-- Production deployment ID: `AKfycbz7hknVlxm_K7RdFBV1gd7MbBz3KYsq7PQ2UgqHHByTxM2PI2W21T8p3sZ6qIenPMPDNg` — serves `mailer.gs`'s `doPost` (`ANYONE_ANONYMOUS`, called from public client JS). Never change its access level.
-- Admin cleanup deployment ID: `AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg` — serves `cleanup.gs`'s `doGet` privately (Execute as: Me, Access: Only myself). Raw URL: `https://script.google.com/macros/s/AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg/exec?token=<ADMIN_TOKEN>` (token stored in Script Properties as `ADMIN_TOKEN`) — but use the short `https://cleanup.whenfree.org/` link day-to-day (see Domain & Redirects). If this deployment is ever recreated (new deployment ID), the Cloudflare redirect rule's target URL must be updated to match.
+- Admin cleanup deployment ID: `AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg` @22 — serves `cleanup.gs`'s `doGet` privately (Execute as: Me, Access: Only myself). Raw URL: `https://script.google.com/macros/s/AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg/exec?token=<ADMIN_TOKEN>` (token stored in Script Properties as `ADMIN_TOKEN`) — but use the short `https://cleanup.whenfree.org/` link day-to-day (see Domain & Redirects). If this deployment is ever recreated (new deployment ID), the Cloudflare redirect rule's target URL must be updated to match.
+
+The old "Production deployment ID" (`AKfycbz7hknVlxm...`, which served `mailer.gs`'s `doPost`) is **no longer among the project's live deployments** — confirmed via `clasp deployments` on 2026-08-06, it was already removed (likely as part of the `mailer.gs` retirement, commit `54482a5`). No action needed; noting this so nobody goes looking for a deployment ID that no longer exists.
 
 ## GAS Daily Report
 
 One-time trigger: select `createTrigger` → Run in GAS editor after deploy.
 
 **Monitoring:** A healthchecks.io check ("WhenFree Daily Report") pings on every run — plain ping on success, `/fail` suffix on error — via `pingHealthcheck_()`. Its ping URL lives in Script Properties as `HEALTHCHECK_PING_URL`, never in source/docs. Because it alerts on a *missed* ping (not a reported failure), it also catches the case where the trigger silently doesn't execute at all — see the OAuth-scope-change gotcha below. Any time `oauthScopes` changes in `appsscript.json`, proactively re-run `createTrigger()` rather than waiting to notice a missing email or an inactive healthchecks.io alert.
+
+**Grace window:** set to 2 days (Period=2 days on the healthchecks.io check, as of 2026-08-02), not 1. Google Apps Script's own time-driven trigger occasionally skips a single scheduled firing with zero record of it — no execution log entry, no error, no `FAILED` email, no `/fail` ping — confirmed via the Apps Script **Executions** dashboard after a missed run on 2026-08-02 (trigger stayed correctly installed and enabled the whole time; every other day around it ran cleanly in 2.6-12s). A 1-day grace window alerts on that harmless one-off; 2 days only alerts if the report is missed on two consecutive nights, which is a much stronger signal of an actual problem (revoked auth, quota, deleted trigger) worth investigating.
 
 ## Design System — Verde (Material 3-aligned)
 

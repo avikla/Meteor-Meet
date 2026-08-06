@@ -7,6 +7,8 @@ const REPORT_CONFIG = {
   tz:         'Asia/Jerusalem',
   cleanupUrl: 'https://cleanup.whenfree.org/',
   healthcheckPingUrl: PropertiesService.getScriptProperties().getProperty('HEALTHCHECK_PING_URL'),
+  mailerUrl: 'https://us-central1-meteor-meet.cloudfunctions.net/sendMail',
+  mailerKey: '96dd0d68afbae35f14a66160f28602529ff1e6752d489e46',
   limits: {
     reads:   50000,
     writes:  20000,
@@ -336,6 +338,30 @@ function pingHealthcheck_(suffix) {
   }
 }
 
+// ── Mail via ZeptoMail Cloud Function (replaces GmailApp) ────────────────────
+function sendEmailViaFunction_(toEmail, subject, body, htmlBody) {
+  var payload = { to_email: toEmail, subject: subject, body: body };
+  if (htmlBody) payload.html_body = htmlBody;
+  try {
+    var res = UrlFetchApp.fetch(REPORT_CONFIG.mailerUrl, {
+      method:             'post',
+      contentType:        'text/plain',
+      headers:            { 'X-WhenFree-Key': REPORT_CONFIG.mailerKey },
+      payload:            JSON.stringify(payload),
+      muteHttpExceptions: true,
+    });
+    var code = res.getResponseCode();
+    if (code < 200 || code >= 300) {
+      console.error('sendEmailViaFunction_ HTTP ' + code + ': ' + res.getContentText());
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error('sendEmailViaFunction_ threw: ' + e.message);
+    return false;
+  }
+}
+
 // ── Main entry point ──────────────────────────────────────────────────────────
 function sendDailyReport() {
   try {
@@ -357,18 +383,25 @@ function sendDailyReport() {
       dateLabel:  win.dateLabel,
     });
 
-    GmailApp.sendEmail(REPORT_CONFIG.recipient, 'WhenFree · Daily DB Report — ' + win.dateLabel, '', {
-      htmlBody: html,
-      name:     'WhenFree',
-    });
+    sendEmailViaFunction_(
+      REPORT_CONFIG.recipient,
+      'WhenFree · Daily DB Report — ' + win.dateLabel,
+      'WhenFree Daily DB Report for ' + win.dateLabel + ' — open in an HTML-capable mail client to view the full report.',
+      html
+    );
 
     console.log('Report sent for ' + win.dateLabel + ': events=' + eventCount +
       ', reads=' + reads + ', writes=' + writes + ', deletes=' + deletes + ', storage=' + storage);
     pingHealthcheck_();
   } catch (err) {
     console.error('sendDailyReport failed: ' + err.message);
-    GmailApp.sendEmail(REPORT_CONFIG.recipient, 'WhenFree · Daily DB Report FAILED',
-      'The daily report script failed with error: ' + err.message);
+    var failMsg = 'The daily report script failed with error: ' + err.message;
+    sendEmailViaFunction_(
+      REPORT_CONFIG.recipient,
+      'WhenFree · Daily DB Report FAILED',
+      failMsg,
+      '<p>' + failMsg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</p>'
+    );
     pingHealthcheck_('/fail');
   }
 }
