@@ -25,7 +25,7 @@ git push
 |------|------|
 | `index.html` | Single-page app (HTML, CSS, JS inline) with Firebase Firestore integration |
 | ~~`mailer.gs`~~ | **Removed** (commit `54482a5`, "Retire GAS mailer web app now that mail runs through the Cloud Function"). Superseded by `functions/index.js`. See Email System section. |
-| `functions/index.js` | Firebase Cloud Function (`sendMail`) — sends all app + `daily-report.gs` emails via ZeptoMail API from `no-reply@whenfree.org`. Auth via `X-WhenFree-Key` header check. Deployed at `https://us-central1-meteor-meet.cloudfunctions.net/sendMail`. |
+| `functions/index.js` | Three Firebase Cloud Functions, each its own deployment sharing this one source file: `sendMail` (sends all app + `daily-report.gs` emails via ZeptoMail API from `no-reply@whenfree.org`), `storeCreatorEmail` (writes the organizer's email server-side into `eventSecrets/{slug}`), `notifyOrganizer` (looks up that email server-side and sends the "participant responded" notification — the client never sees the address). Auth via `X-WhenFree-Key` header check on all three. Uses `firebase-admin` (lazily initialized — see Security Patterns). URLs: `https://us-central1-meteor-meet.cloudfunctions.net/{sendMail,storeCreatorEmail,notifyOrganizer}`. |
 | `daily-report.gs` | GAS — daily DB usage report to `avi.klayman@gmail.com` at midnight IST |
 | `cleanup.gs` | GAS — private web-app admin page (`doGet`) to review and delete expired events. Separate deployment from other GAS entry points; see GAS Deployment section. |
 | `appsscript.json` | GAS manifest — OAuth scopes, timezone (Asia/Jerusalem), runtime |
@@ -74,13 +74,15 @@ git push
 
 ## Email System
 
-- **Sender:** ZeptoMail transactional API, called via a Firebase Cloud Function (`functions/index.js`, `sendMail`) at `https://us-central1-meteor-meet.cloudfunctions.net/sendMail` — not GAS. `index.html` calls it via `fetch()` (`sendEmailViaGAS()`, despite the name); `daily-report.gs` calls it via `UrlFetchApp.fetch()` through its own `sendEmailViaFunction_()` helper. Both pass an `X-WhenFree-Key` header for a light abuse-deterrent check (`checkAuth()` in the Cloud Function) — not a real secret, the key is a public constant shipped in `index.html`.
-- **Endpoint:** `https://api.zeptomail.com/v1.1/email` (US region) — called server-side by the Cloud Function, not directly by GAS or the browser.
-- **Auth:** `Authorization: <ZEPTO_API_KEY>` — read via `process.env.ZEPTO_API_KEY` in the Cloud Function (exact provisioning — env var vs. Secret Manager — not documented here; check the Cloud Function's deploy config if it needs rotating). Never in source code.
-- **daily-report.gs:** sends its nightly report and failure-alert emails through this same Cloud Function via `sendEmailViaFunction_()` — previously used `GmailApp.sendEmail()`, which required the restricted `https://mail.google.com/` OAuth scope and caused the trigger's authorization to silently expire roughly every 7 days on this unverified GAS project (see the trigger-reliability gotcha above). Removing that scope by moving to the Cloud Function eliminates that failure mode.
+- **Sender:** ZeptoMail transactional API, called via three Firebase Cloud Functions (`functions/index.js`: `sendMail`, `storeCreatorEmail`, `notifyOrganizer`) — not GAS. `index.html` calls `sendMail` via `fetch()` (`sendEmailViaGAS()`, despite the name); `daily-report.gs` calls `sendMail` via `UrlFetchApp.fetch()` through its own `sendEmailViaFunction_()` helper. All three functions pass/check an `X-WhenFree-Key` header for a light abuse-deterrent check (`checkAuth()`) — not a real secret, the key is a public constant shipped in `index.html` (`WHENFREE_MAIL_KEY`) and in `daily-report.gs`'s Script Properties (`MAILER_KEY`).
+- **Endpoint:** `https://api.zeptomail.com/v1.1/email` (US region) — called server-side by the Cloud Functions, not directly by GAS or the browser.
+- **Auth:** `Authorization: <ZEPTO_API_KEY>` — read via `process.env.ZEPTO_API_KEY` in the Cloud Functions (Secret Manager, bound via `--set-secrets` at deploy time — see GAS Deployment / deploy commands below). Never in source code.
+- **Per-event send cap:** `checkAndIncrementMailCount_()` in `functions/index.js` caps sends to 100/day per `event_slug` (tracked in `mailCounts/{slug}`, a Firestore collection closed to client reads) — mitigates using the mail relay for bulk spam without restricting recipients, since the invite/best-times panels intentionally let users email arbitrary addresses (a real feature, not a bug). Fails open on any Firestore error so a rate-limiter hiccup can never block real mail delivery. Requests with no `event_slug` (e.g. `daily-report.gs`) share a bucket keyed `unknown` — **not** `__unknown__`; see the reserved-document-ID gotcha below.
+- **daily-report.gs:** sends its nightly report and failure-alert emails through `sendMail` via `sendEmailViaFunction_()` — previously used `GmailApp.sendEmail()`, which required the restricted `https://mail.google.com/` OAuth scope and caused the trigger's authorization to silently expire roughly every 7 days on this unverified GAS project (see the trigger-reliability gotcha below). Removing that scope by moving to the Cloud Function eliminates that failure mode.
+- **Organizer email storage (added 2026-08-19):** the organizer's email is **not** stored on the public `events/{slug}` document (Firestore has `allow read: if true` there, so anything on it is world-readable). `createEvent()` in `index.html` calls `storeCreatorEmail` right after creating the event, which verifies the request's `creatorToken` matches the event doc, then writes the email into `eventSecrets/{slug}` — a collection with `allow read, write: if false` in Firestore rules, reachable only via the Cloud Functions' Admin SDK (which bypasses rules). See the Security Patterns entry below for why this changed and the full gotcha writeup.
 - **Template:** `buildEmailTemplate(bodyHtml, dir)` — dark forest header with calendar-check icon + "WhenFree" wordmark, verde palette card, sage background
 - **Email types:** creator confirmation, invite to mark availability, best times, organizer notification (all localized EN/HE/FR with RTL support)
-- **Organizer notification:** `scheduleNotifyOrganizer(name)` — debounced 120s after last cell mark (not on join). Sends branded HTML with participant avatar initial chip.
+- **Organizer notification:** `scheduleNotifyOrganizer(name)` — debounced 120s after last cell mark (not on join) — calls `fireNotifyOrganizer()`, which posts to the `notifyOrganizer` Cloud Function (`eventSlug` + pre-built subject/body only, no email address) rather than sending client-side. Sends branded HTML with participant avatar initial chip.
 - **ICS UID format:** `${eventSlug}-${Date.now()}@whenfree.org`
 
 ## Key Functions
@@ -96,6 +98,7 @@ git push
 | `buildEmailTemplate(bodyHtml, dir)` | Wraps email content in branded HTML template |
 | `buildBestTimesEmailHtml()` | Builds localized best-times email (uses `currentLang`) |
 | `scheduleNotifyOrganizer(name)` | Debounced (120s) notification to creator when a participant marks cells — only fires on cell marks, not on join |
+| `storeCreatorEmail(eventSlug, creatorEmail, creatorToken)` | Posts the organizer's email to the `storeCreatorEmail` Cloud Function right after event creation, so it lands in `eventSecrets/{slug}` instead of the public event doc |
 | `toggleEmailPanel(panelId, btnId, otherPanelId)` | Opens/closes floating email input panels via `position:fixed` |
 | `setLang(code)` | Sets language, updates localStorage and URL (`?lang=`) |
 | `getViewerTz()` | Returns the browser's IANA timezone (`Intl.DateTimeFormat().resolvedOptions().timeZone`) |
@@ -133,6 +136,10 @@ Each event document stores:
 - `createdAt` — Firestore server timestamp (added June 2026; older events lack this field)
 - `lastDate` — ISO date string of the latest date in `selectedDates` (e.g. `"2026-07-15"`); `null` for `days` mode events (recurring days of week have no end date)
 
+**Does not store `creatorEmail`** (since 2026-08-19) — it lives in the separate `eventSecrets/{slug}` collection instead (`{creatorEmail}`, one doc per event, `allow read, write: if false`), written by the `storeCreatorEmail` Cloud Function. All 71 pre-existing events that had `creatorEmail` on the public doc were migrated (copy-verify-delete, one-time script) the same day; `events` docs created before then should have no residual field either. See the Security Patterns entry below for why.
+
+**`mailCounts/{slug}`** — one doc per event, `{date, count}`, used only by the Cloud Functions' per-event send-rate cap (see Email System). Also `allow read, write: if false`.
+
 **Cleanup tool:** `cleanup.gs` provides a private admin web page to review candidates and delete them after typing a confirm phrase. It flags two buckets: (1) dated events where `lastDate` < today, (2) recurring (`days` mode, `lastDate == null`) events with no `createdAt` for 90+ days. Caveat: events created before June 2026 predate `createdAt` entirely, so old abandoned recurring events from before then won't surface automatically — review those manually in Firestore Console. Manual fallback (still valid): Firestore Console → `events` → filter `lastDate` < today.
 
 ## RTL / Layout Architecture
@@ -147,13 +154,15 @@ Each event document stores:
 
 ## Firestore Security Rules
 
-Rules deployed **2026-06-21** — no longer in Test Mode.
+Rules deployed **2026-06-21**, updated **2026-08-19** (removed `creatorEmail` from `events`; added `eventSecrets`/`mailCounts`) — no longer in Test Mode.
 
 **Security model (no Firebase Auth):**
-- `allow read: if true` — events are share-by-link; public reads are intentional
-- `allow create` — validates required fields, `participants == {}`, `creatorToken.size() >= 48`, `name.size() <= 200`
-- `allow update` — protects immutable fields (`creatorToken`, `createdAt`, `mode`, `selectedDates`, `selectedDays`, `earlierThan`, `laterThan`, `timezone`, `creatorEmail`); only `participants` and `name` can change
-- `allow delete: if false` — no client-side event deletion
+- `events/{slug}`:
+  - `allow read: if true` — events are share-by-link; public reads are intentional
+  - `allow create` — validates required fields, `participants == {}`, `creatorToken.size() >= 48`, `name.size() <= 200`. **Does not include `creatorEmail`** — do not add it back; that field no longer belongs on this doc (see Firestore Event Fields).
+  - `allow update` — protects immutable fields (`creatorToken`, `createdAt`, `mode`, `selectedDates`, `selectedDays`, `earlierThan`, `laterThan`, `timezone`); only `participants` and `name` can change. If you ever add a field back to `events` that isn't meant to be updatable, add its immutability check here too — but never reference a field that a current-schema document might not have (`resource.data.foo` **throws** if `foo` doesn't exist on the doc, it does not evaluate to `null`; this is exactly what broke when `creatorEmail` was removed from `create` but the old equality check in `update` still referenced it unconditionally — every update to a newly-created event would have thrown until that line was also deleted).
+  - `allow delete: if false` — no client-side event deletion
+- `eventSecrets/{slug}` and `mailCounts/{slug}`: `allow read, write: if false` — fully closed to client SDKs, reachable only via the Cloud Functions' Admin SDK (which bypasses rules entirely). See Firestore Event Fields.
 - Creator-only ops (remove participant, edit title) remain **client-gated only** — server enforcement requires Firebase Auth, which this app doesn't use
 
 **To update rules:** Firebase Console → Firestore → Rules → Publish. No Firebase CLI is configured in this project.
@@ -173,7 +182,9 @@ curl -s -H "Authorization: Bearer $TOKEN" -H "x-goog-user-project: meteor-meet" 
 - **`escHtml()` is mandatory for all `innerHTML` injection** — any user-supplied string (participant name, event name, etc.) must go through `escHtml()` before being interpolated into an HTML template string. Using `textContent` is always safe and preferred; switch to `innerHTML` only when you need to embed tags (e.g. `<br>` between name parts). The `escHtml` helper is defined near the bottom of the script block.
 - **Crypto tokens use `crypto.getRandomValues()`** — never `Math.random()` for anything used as a security identifier. Event slugs: `Uint8Array(5)` → base-36. Creator tokens: `Uint8Array(24)` → hex (192 bits).
 - **Firebase scripts are in `<body>`** — the two Firebase CDN `<script>` tags live just before the inline app `<script>` (near line 1546), not in `<head>`. This prevents them from blocking initial HTML render. Do not move them back to `<head>`.
-- **Mail Cloud Function has a shared-secret gate, not an open relay** — `functions/index.js`'s `sendMail` checks an `X-WhenFree-Key` header (`checkAuth()`) and returns 403 on mismatch. The key is a public constant in `index.html` (not a real secret — it's shipped to every browser), so this is a light abuse-deterrent, not strong auth; `to_email` itself is still unrestricted once the header matches. (Historical note: the predecessor `mailer.gs` GAS webapp truly had no auth check at all — this was fixed as part of the Cloud Function migration.)
+- **Mail Cloud Function has a shared-secret gate, not an open relay** — `functions/index.js`'s `sendMail`/`storeCreatorEmail`/`notifyOrganizer` all check an `X-WhenFree-Key` header (`checkAuth()`) and return 403 on mismatch. The key is a public constant in `index.html` (not a real secret — it's shipped to every browser), so this is a light abuse-deterrent, not strong auth. `to_email` on `sendMail` is still deliberately unrestricted once the header matches — the invite/best-times panels legitimately email arbitrary addresses, so a recipient allowlist isn't viable; the actual abuse mitigation is the per-event daily send cap (see Email System). (Historical note: the predecessor `mailer.gs` GAS webapp truly had no auth check at all — this was fixed as part of the Cloud Function migration.)
+- **Organizer email is not public data (fixed 2026-08-19)** — `creatorEmail` used to be written straight into the public `events/{slug}` Firestore doc (`allow read: if true`), so on every page load `S.creatorEmail` was populated from Firestore for *every visitor*, not only the creator, and `fireNotifyOrganizer()` then emailed the organizer directly from any participant's browser session — meaning any participant, or anyone the link leaked to, could read the organizer's email straight out of loaded page state or a raw Firestore read. Fixed by moving storage into `eventSecrets/{slug}` (client-unreadable; see Firestore Security Rules) via the `storeCreatorEmail` Cloud Function, and having `notifyOrganizer` look the address up server-side instead of the client sending it. **Watch for:** any future field meant to be creator-only/private must go into `eventSecrets` (or a similar closed collection), never onto `events` — Firestore has no field-level read rules, so anything on a publicly-readable document is fully public, regardless of whether the UI happens to only display it to the creator.
+- **Firestore reserves document IDs matching `/^__.*__\$/`** (starts *and* ends with double underscore) — writes/reads against an ID like `__unknown__` or `__curl_test__` fail with `INVALID_ARGUMENT: ... reserved`. Bit us twice in one session: once testing `storeCreatorEmail` with a throwaway ID (harmless, just a bad test-ID choice), and once for real — `checkAndIncrementMailCount_()`'s fallback bucket for requests with no `event_slug` (i.e. `daily-report.gs`'s calls to `sendMail`) was originally named `__unknown__`, and since that call sat outside `sendMail`'s try/catch, the resulting Firestore error was an *unhandled* rejection that the Functions Framework turned into a bare 500 with no JSON body — which is exactly what broke the daily report's mail send after this was first deployed. Fixed by renaming the bucket to `unknown` and wrapping the whole rate-limit check in try/catch that fails open (returns "under cap") on any Firestore error, so a rate-limiter problem can never take down real mail delivery again. **Pattern to watch for:** never let a secondary/best-effort check (rate limiting, logging, analytics) sit outside the primary try/catch of a request handler — an unrelated failure there shouldn't be able to fail the whole request.
 
 ## Event Listener Patterns
 
@@ -199,9 +210,41 @@ clasp push --force && clasp deploy --deploymentId AKfycbwrdVpTaIvbtAH07eul9a6aJH
 
 Confirmed live deployments (via `clasp deployments`, 2026-08-06):
 - `@HEAD` deployment ID: `AKfycbwVGimKBjWg3PRYpkRLPFcW1vbdQV7KxpJepNOwcSzg` (dev/test only)
-- Admin cleanup deployment ID: `AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg` @22 — serves `cleanup.gs`'s `doGet` privately (Execute as: Me, Access: Only myself). Raw URL: `https://script.google.com/macros/s/AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg/exec?token=<ADMIN_TOKEN>` (token stored in Script Properties as `ADMIN_TOKEN`) — but use the short `https://cleanup.whenfree.org/` link day-to-day (see Domain & Redirects). If this deployment is ever recreated (new deployment ID), the Cloudflare redirect rule's target URL must be updated to match.
+- Admin cleanup deployment ID: `AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg` @23 (bumped 2026-08-19 — added constant-time token compare + failed-attempt lockout) — serves `cleanup.gs`'s `doGet` privately (Execute as: Me, Access: Only myself). Raw URL: `https://script.google.com/macros/s/AKfycbwrdVpTaIvbtAH07eul9a6aJHQNSr59u5dTQIhoPy_boDLtYjTJhiTUxVuPfyErWQlHAg/exec?token=<ADMIN_TOKEN>` (token stored in Script Properties as `ADMIN_TOKEN`) — but use the short `https://cleanup.whenfree.org/` link day-to-day (see Domain & Redirects). If this deployment is ever recreated (new deployment ID), the Cloudflare redirect rule's target URL must be updated to match.
+- `daily-report.gs`'s mail key (used to call `sendMail`) now reads from Script Properties as `MAILER_KEY` (added 2026-08-19) instead of being hardcoded in source — matches its sibling secrets (`API_KEY`, `HEALTHCHECK_PING_URL`) in the same config block. If this GAS project is ever re-provisioned, `MAILER_KEY` must be set to the same value as `WHENFREE_MAIL_KEY` in `index.html`, or `daily-report.gs`'s mail calls will fail `checkAuth()`.
 
 The old "Production deployment ID" (`AKfycbz7hknVlxm...`, which served `mailer.gs`'s `doPost`) is **no longer among the project's live deployments** — confirmed via `clasp deployments` on 2026-08-06, it was already removed (likely as part of the `mailer.gs` retirement, commit `54482a5`). No action needed; noting this so nobody goes looking for a deployment ID that no longer exists.
+
+## Cloud Functions Deployment
+
+No Firebase CLI configured in this project — deploy via `gcloud`, one command per function (all three share `functions/` as source; only `--entry-point` differs). Each deploy triggers a Cloud Build that runs `npm install` from `functions/package.json` automatically — no manual install step needed before deploying. Redeploy **every** function that shares `functions/index.js` whenever that file changes, not just the one you're adding/fixing.
+
+```powershell
+gcloud functions deploy sendMail --gen2 --runtime=nodejs20 --region=us-central1 `
+  --trigger-http --allow-unauthenticated --source=functions/ --entry-point=sendMail `
+  --set-secrets='ZEPTO_API_KEY=zepto-api-key:latest,WHENFREE_MAIL_KEY=whenfree-mail-key:latest' `
+  --max-instances=5 --project=meteor-meet
+
+gcloud functions deploy storeCreatorEmail --gen2 --runtime=nodejs20 --region=us-central1 `
+  --trigger-http --allow-unauthenticated --source=functions/ --entry-point=storeCreatorEmail `
+  --set-secrets='ZEPTO_API_KEY=zepto-api-key:latest,WHENFREE_MAIL_KEY=whenfree-mail-key:latest' `
+  --max-instances=5 --project=meteor-meet
+
+gcloud functions deploy notifyOrganizer --gen2 --runtime=nodejs20 --region=us-central1 `
+  --trigger-http --allow-unauthenticated --source=functions/ --entry-point=notifyOrganizer `
+  --set-secrets='ZEPTO_API_KEY=zepto-api-key:latest,WHENFREE_MAIL_KEY=whenfree-mail-key:latest' `
+  --max-instances=5 --project=meteor-meet
+```
+
+`--allow-unauthenticated` is required for a public HTTP endpoint — the `X-WhenFree-Key` header check inside each function is the actual gate, not IAM. All three run as `935791631512-compute@developer.gserviceaccount.com` (the default compute service account), which already has sufficient Firestore access — confirmed working 2026-08-19, no extra IAM binding was needed for `storeCreatorEmail`/`notifyOrganizer`'s Admin SDK reads/writes.
+
+**Quick isolated verification** (before touching the client) — expect `403 forbidden`, proves auth + Firestore lookup work without touching real data:
+```powershell
+curl -i -X POST https://us-central1-meteor-meet.cloudfunctions.net/storeCreatorEmail `
+  -H "Content-Type: text/plain" -H "X-WhenFree-Key: <WHENFREE_MAIL_KEY value>" `
+  -d '{\"eventSlug\":\"sometestslug123\",\"creatorEmail\":\"test@example.com\",\"creatorToken\":\"bad-token\"}'
+```
+Avoid `__`-wrapped test IDs (e.g. `__curl_test__`) — see the reserved-document-ID gotcha in Security Patterns.
 
 ## GAS Daily Report
 
