@@ -1687,6 +1687,8 @@ const db = firebase.firestore();
 // CONFIG
 // ══════════════════════════════════════
 const MAILER_FUNCTION_URL = 'https://us-central1-meteor-meet.cloudfunctions.net/sendMail';
+const STORE_EMAIL_FUNCTION_URL = 'https://us-central1-meteor-meet.cloudfunctions.net/storeCreatorEmail';
+const NOTIFY_FUNCTION_URL = 'https://us-central1-meteor-meet.cloudfunctions.net/notifyOrganizer';
 const WHENFREE_MAIL_KEY = '96dd0d68afbae35f14a66160f28602529ff1e6752d489e46';
 
 // STATE
@@ -2622,7 +2624,6 @@ async function createEvent() {
       timezone: S.timezone,
       creatorToken,
       creatorName,
-      creatorEmail,
       notifyOnResponse,
       lang: currentLang,
       participants: {},
@@ -2634,6 +2635,7 @@ async function createEvent() {
     location.hash = S.eventSlug;
     sessionStorage.setItem('meteor-creator-name-' + S.eventSlug, creatorName);
     transitionToB();
+    storeCreatorEmail(S.eventSlug, creatorEmail, creatorToken);
     sendCreatorConfirmationEmail(creatorName, creatorEmail, S.eventName, window.location.href);
   } catch(e) {
     btn.innerHTML = t().createBtn;
@@ -3086,12 +3088,26 @@ async function sendEmailViaGAS(toEmail, subject, body, htmlBody, eventName, meet
       event_name: eventName,
       meeting_url: meetingUrl,
       subject,
+      event_slug: S.eventSlug,
       ...(body && { body }),
       ...(htmlBody && { html_body: htmlBody }),
     }),
   });
   const json = await res.json();
   if (!json.ok) throw new Error(json.error || 'send failed');
+}
+
+// Persists the creator's email server-side (eventSecrets/{slug}, not client-readable)
+// instead of writing it into the public events/{slug} document.
+async function storeCreatorEmail(eventSlug, creatorEmail, creatorToken) {
+  try {
+    await fetch(STORE_EMAIL_FUNCTION_URL, {
+      method: 'POST',
+      keepalive: true,
+      headers: { 'Content-Type': 'text/plain', 'X-WhenFree-Key': WHENFREE_MAIL_KEY },
+      body: JSON.stringify({ eventSlug, creatorEmail, creatorToken }),
+    });
+  } catch (e) {}
 }
 
 async function sendCreatorConfirmationEmail(creatorName, toEmail, eventName, meetingUrl) {
@@ -3117,11 +3133,20 @@ function fireNotifyOrganizer(participantName) {
   const subject  = t().notifySubject(participantName, S.eventName);
   const body     = t().notifyBody(participantName, S.eventName, window.location.href);
   const htmlBody = t().notifyHtml(participantName, S.eventName, window.location.href);
-  sendEmailViaGAS(S.creatorEmail, subject, body, htmlBody, S.eventName, window.location.href)
-    .catch(() => {});
+  fetch(NOTIFY_FUNCTION_URL, {
+    method: 'POST',
+    keepalive: true,
+    headers: { 'Content-Type': 'text/plain', 'X-WhenFree-Key': WHENFREE_MAIL_KEY },
+    body: JSON.stringify({
+      eventSlug: S.eventSlug,
+      subject, body, html_body: htmlBody,
+      event_name: S.eventName,
+      meeting_url: window.location.href,
+    }),
+  }).catch(() => {});
 }
 function scheduleNotifyOrganizer(participantName) {
-  if (S.isCreator || !S.notifyOnResponse || !S.creatorEmail) return;
+  if (S.isCreator || !S.notifyOnResponse) return;
   clearTimeout(_notifyTimer);
   _pendingNotifyName = participantName;
   _notifyTimer = setTimeout(() => {
@@ -4220,7 +4245,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         S.timezone      = data.timezone;
         S.eventSlug     = hashId;
         S.notifyOnResponse = data.notifyOnResponse || false;
-        S.creatorEmail  = data.creatorEmail || '';
         S.creatorName   = data.creatorName || '';
         const storedToken = sessionStorage.getItem('meteor-creator-' + hashId);
         S.isCreator = !!(storedToken && storedToken === data.creatorToken);

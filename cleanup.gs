@@ -163,10 +163,49 @@ function deleteEvents(ids, confirmToken) {
   return { deletedCount: ids.length, deletedIds: ids };
 }
 
+// ── Auth: constant-time token compare + brute-force lockout ─────────────────
+// Apps Script's V8 runtime has no crypto.timingSafeEqual, so this XOR-accumulates
+// over the full max length regardless of where characters mismatch, instead of
+// short-circuiting like `!==` does.
+function timingSafeEqual_(a, b) {
+  a = String(a); b = String(b);
+  var diff = a.length ^ b.length;
+  var len = Math.max(a.length, b.length);
+  for (var i = 0; i < len; i++) {
+    var ca = i < a.length ? a.charCodeAt(i) : 0;
+    var cb = i < b.length ? b.charCodeAt(i) : 0;
+    diff |= ca ^ cb;
+  }
+  return diff === 0;
+}
+
+// Apps Script doGet() has no reliable caller IP, so this is a global (not per-IP)
+// lockout: too many failed attempts from anyone locks out everyone, admin included,
+// for the cooldown window. Blunt, but this is a low-traffic private tool and the
+// alternative is an unthrottled brute-forceable token.
+var LOCKOUT_CONFIG = { maxFailures: 10, windowSec: 600, cooldownSec: 900 };
+function checkLockout_() {
+  var cache = CacheService.getScriptCache();
+  return !cache.get('cleanup_lockout');
+}
+function recordFailure_() {
+  var cache = CacheService.getScriptCache();
+  var count = parseInt(cache.get('cleanup_fail_count') || '0', 10) + 1;
+  cache.put('cleanup_fail_count', String(count), LOCKOUT_CONFIG.windowSec);
+  if (count >= LOCKOUT_CONFIG.maxFailures) {
+    cache.put('cleanup_lockout', '1', LOCKOUT_CONFIG.cooldownSec);
+  }
+}
+
 // ── Web app entry point (private admin page; doPost/mailer.gs untouched) ─────
 function doGet(e) {
+  if (!checkLockout_()) {
+    return HtmlService.createHtmlOutput('Too many failed attempts. Try again later.').setTitle('429');
+  }
+
   var token = e && e.parameter && e.parameter.token;
-  if (!CLEANUP_CONFIG.adminToken || token !== CLEANUP_CONFIG.adminToken) {
+  if (!CLEANUP_CONFIG.adminToken || !timingSafeEqual_(token || '', CLEANUP_CONFIG.adminToken)) {
+    recordFailure_();
     return HtmlService.createHtmlOutput('Forbidden').setTitle('403');
   }
 

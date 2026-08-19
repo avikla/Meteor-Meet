@@ -8,7 +8,7 @@ const REPORT_CONFIG = {
   cleanupUrl: 'https://cleanup.whenfree.org/',
   healthcheckPingUrl: PropertiesService.getScriptProperties().getProperty('HEALTHCHECK_PING_URL'),
   mailerUrl: 'https://us-central1-meteor-meet.cloudfunctions.net/sendMail',
-  mailerKey: '96dd0d68afbae35f14a66160f28602529ff1e6752d489e46',
+  mailerKey: PropertiesService.getScriptProperties().getProperty('MAILER_KEY'),
   limits: {
     reads:   50000,
     writes:  20000,
