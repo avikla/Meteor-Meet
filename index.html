@@ -3881,7 +3881,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   function addEmailChip(chipsId, inputId, email) {
     email = email.trim().toLowerCase();
-    if (!email || !email.includes('@') || !email.includes('.')) return false;
+    const bracketed = email.match(/<([^<>]+)>/);
+    if (bracketed) email = bracketed[1].trim();
+    if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)) return false;
     if (getChipEmails(chipsId).includes(email)) { document.getElementById(inputId).value = ''; return false; }
     const chip = document.createElement('div');
     chip.className = 'email-chip';

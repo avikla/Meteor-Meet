@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { checkAuth, buildZeptoPayload, parseRequestBody } = require('./index.js');
+const { checkAuth, buildZeptoPayload, parseRequestBody, EMAIL_RE } = require('./index.js');
 
 test('parseRequestBody parses a raw JSON string body (text/plain content-type)', () => {
   const req = { body: '{"to_email":"a@example.com","event_name":"Test"}' };
@@ -60,4 +60,18 @@ test('buildZeptoPayload falls back to default subject/body/html_body when absent
   assert.equal(payload.subject, 'Your meeting link: Fallback Event');
   assert.match(payload.textbody, /https:\/\/whenfree\.org\/e\/xyz/);
   assert.match(payload.htmlbody, /https:\/\/whenfree\.org\/e\/xyz/);
+});
+
+test('EMAIL_RE accepts a plain valid address', () => {
+  assert.equal(EMAIL_RE.test('susansjostrom@gmail.com'), true);
+});
+
+test('EMAIL_RE rejects a pasted "Name <email>" blob', () => {
+  assert.equal(EMAIL_RE.test('susan sjostrom <susansjostrom@gmail.com>'), false);
+  assert.equal(EMAIL_RE.test('susan sjostrom <susansjostrom@gmail.com'), false);
+});
+
+test('EMAIL_RE rejects strings with no valid email shape', () => {
+  assert.equal(EMAIL_RE.test('not an email'), false);
+  assert.equal(EMAIL_RE.test(''), false);
 });

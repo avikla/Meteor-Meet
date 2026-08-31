@@ -12,6 +12,7 @@ function getDb() {
 }
 
 const FROM = { address: 'no-reply@whenfree.org', name: 'WhenFree' };
+const EMAIL_RE = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
 
 function checkAuth(req) {
   return req.get('X-WhenFree-Key') === process.env.WHENFREE_MAIL_KEY;
@@ -116,6 +117,10 @@ async function sendMail(req, res) {
 
   const data = parseRequestBody(req);
   const { to_email, subject, event_slug } = data;
+  if (!EMAIL_RE.test(to_email || '')) {
+    res.status(200).json({ ok: false, error: 'invalid_recipient' });
+    return;
+  }
   const payload = buildZeptoPayload(data);
 
   const underCap = await checkAndIncrementMailCount_(event_slug);
@@ -215,6 +220,10 @@ async function notifyOrganizer(req, res) {
       res.status(200).json({ ok: true, skipped: true });
       return;
     }
+    if (!EMAIL_RE.test(creatorEmail)) {
+      res.status(200).json({ ok: false, error: 'invalid_recipient' });
+      return;
+    }
 
     const underCap = await checkAndIncrementMailCount_(eventSlug);
     if (!underCap) {
@@ -243,4 +252,5 @@ module.exports = {
   storeCreatorEmail,
   notifyOrganizer,
   FROM,
+  EMAIL_RE,
 };
