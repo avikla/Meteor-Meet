@@ -195,6 +195,8 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);overflo
   color:var(--muted);margin-bottom:18px;
 }
 
+.step-hint{font-size:14px;color:var(--muted);margin:-8px 0 16px;line-height:1.5}
+
 .step-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .step-header .step-label{margin-bottom:0}
 
@@ -1431,6 +1433,7 @@ body.a11y-adhd .a11y-panel{opacity:1 !important;pointer-events:auto !important}
     <!-- Step 3: Times -->
     <div class="card" style="--d:.28s;display:none" data-step="3">
       <div class="step-label"><span class="step-num">04</span><span data-i18n="step3">Set time range</span></div>
+      <p class="step-hint" data-i18n="step3Hint">Sets the earliest and latest possible time for the meeting — you'll mark your own free times next.</p>
       <div class="time-row">
         <div class="time-field">
           <label class="field-label" data-i18n="noEarlier">No earlier than</label>
@@ -1732,7 +1735,7 @@ const LANGS = {
     step2:'Pick dates', modeSpecific:'Specific Dates', modeDays:'Days of Week',
     prevMonth:'Previous month', nextMonth:'Next month',
     errorDate:'Please select at least one date.', errorDay:'Please select at least one day.',
-    step3:'Set time range', noEarlier:'No earlier than', noLater:'No later than', timezone:'Time zone', tzSearch:'Search timezone…',
+    step3:'Set time range', step3Hint:"Sets the earliest and latest possible time for the meeting — you'll mark your own free times next.", noEarlier:'No earlier than', noLater:'No later than', timezone:'Time zone', tzSearch:'Search timezone…',
     createBtn:`Create Event ${_AR}`, creating:'Creating…',
     markAvail:'Mark your availability',
     markSub:"Enter your name, then click or drag the slots to show when you're free.",
@@ -1827,7 +1830,7 @@ const LANGS = {
     step2:'בחירת תאריכים', modeSpecific:'תאריכים ספציפיים', modeDays:'ימי השבוע',
     prevMonth:'חודש קודם', nextMonth:'חודש הבא',
     errorDate:'יש לבחור לפחות תאריך אחד.', errorDay:'יש לבחור לפחות יום אחד.',
-    step3:'טווח שעות', noEarlier:'לא לפני', noLater:'לא אחרי', timezone:'אזור זמן', tzSearch:'חיפוש אזור זמן…',
+    step3:'טווח שעות', step3Hint:'קובע את השעה המוקדמת והמאוחרת ביותר לפגישה — בעמוד הבא תסמן מתי אתה פנוי.', noEarlier:'לא לפני', noLater:'לא אחרי', timezone:'אזור זמן', tzSearch:'חיפוש אזור זמן…',
     createBtn:`יצירת אירוע ${_AL}`, creating:'יוצר…',
     markAvail:'סמן זמינות',
     markSub:'הכנס שם ולחץ או גרור על התאים כדי לסמן מתי אתה פנוי.',
@@ -1922,7 +1925,7 @@ const LANGS = {
     step2:'Choisir les dates', modeSpecific:'Dates précises', modeDays:'Jours de la semaine',
     prevMonth:'Mois précédent', nextMonth:'Mois suivant',
     errorDate:'Veuillez sélectionner au moins une date.', errorDay:'Veuillez sélectionner au moins un jour.',
-    step3:'Définir la plage horaire', noEarlier:'Pas avant', noLater:'Pas après', timezone:'Fuseau horaire', tzSearch:'Rechercher un fuseau…',
+    step3:'Définir la plage horaire', step3Hint:"Définit l'heure la plus tôt et la plus tard possible pour la réunion — vous indiquerez vos disponibilités exactes à l'écran suivant.", noEarlier:'Pas avant', noLater:'Pas après', timezone:'Fuseau horaire', tzSearch:'Rechercher un fuseau…',
     createBtn:`Créer l'événement ${_AR}`, creating:'Création…',
     markAvail:'Indiquez vos disponibilités',
     markSub:'Entrez votre nom, puis cliquez ou faites glisser sur les créneaux pour indiquer vos disponibilités.',
