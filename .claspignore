@@ -4,4 +4,5 @@
 .gitmodules
 .git/**
 functions/**
+gas-cleanup/**
 **/node_modules/**
